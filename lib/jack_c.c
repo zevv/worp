@@ -59,7 +59,7 @@ static int l_open(lua_State *L)
 	const char *server_name = NULL;
 	jack_options_t options = JackNullOption;
 	jack_status_t status;
-	char *port_name[] = { "left", "right" };
+	char *port_name[] = { "left", "right", "left", "right" };
 
 	struct jack *jack = lua_newuserdata(L, sizeof *jack);
 	
@@ -83,8 +83,12 @@ static int l_open(lua_State *L)
 	jack_set_process_callback(jack->client, process, jack);
 
 	for(i=0; i<JACK_PORTS; i++) {
-		jack->port[i] = jack_port_register (jack->client, port_name[i], JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-
+		jack->port[i] = jack_port_register(
+					jack->client, 
+					port_name[i], 
+					JACK_DEFAULT_AUDIO_TYPE, 
+					(i <= 1) ? JackPortIsOutput : JackPortIsInput, 
+					0);
 		if (jack->port[i] == NULL) {
 			fprintf(stderr, "no more JACK ports available\n");
 			exit (1);

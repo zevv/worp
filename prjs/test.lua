@@ -13,6 +13,8 @@ headphone = Mixer.new("PCM")
 m = Metro:new(100)
 
 
+synth:program_change(1, 42)
+
 osc = Dsp.osc(1000)
 noise = Dsp.noise()
 
@@ -25,6 +27,8 @@ mi:on_pot(1, 3, function(a) osc(a * 100) end)
 mi:on_pot(1, 4, function(a) nl = a end)
 mi:on_pot(1, 5, function(a) nl2 = a * 0.01 end)
 mi:on_pot(1, 6, function(a) d = a * 4 end)
+
+local n = 0
 
 dsp = Jack.new("flop", function(t)
 	local v = math.tanh(osc()  * d) * mul
@@ -42,8 +46,13 @@ end
 function bip(f)
 	print("Bip")
 	osc(f)
+	dur = m:beat() * 4
 	if f == 100 then f = 100 * rl { 1.33, 1.25 } else f = 100 end
-	at(t_now + m:beat() * 4, "bip", f)
+	if math.random() < 0.3 then 
+		f = f * 8 
+		dur = dur / 16 
+	end
+	at(t_now + dur + 0.3, "bip", f)
 end
 
 
@@ -55,8 +64,8 @@ function bip2(f)
 	at(t_now + 0.001 + m:beat() / rl { 8, 16, 16}, "bip2", f)
 end
 
-m:at_beat(bip)
-m:at_beat(bip2)
+--m:at_beat(bip)
+--m:at_beat(bip2)
 
 
 mi:on_key(1, function(onoff, channel, note, vel)

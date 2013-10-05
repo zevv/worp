@@ -60,7 +60,7 @@ end
 
 function at(t, fn, ...)
 	local ev = {
-		t_when = t,
+		t_when = t_now + t,
 		fn = fn,
 		args = { ... }
 	}

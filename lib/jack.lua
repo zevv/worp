@@ -1,9 +1,12 @@
 
 local jack_c = require "jack_c"
 
-local function new(name, fn)
+local function new(name, port_list, fn)
 
-   local j, fd, srate, bsize = jack_c.open(name)
+   local j, fd, srate, bsize = jack_c.open(name, port_list)
+
+   print("Create", j, fd, srate, bsize)
+
    local t = 0
 
    watch_fd(fd, function()
@@ -12,7 +15,7 @@ local function new(name, fn)
 
       local ok = safecall(function()
          for i = 1, 1024 do
-            jack_c.write(j, fn(t))
+            jack_c.write(j, fn(t, jack_c.read(j)))
             t = t + 1/srate
          end
       end)

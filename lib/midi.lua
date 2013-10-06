@@ -19,7 +19,7 @@ local function new(fname)
 
       local msg = p.read(fd, 3)
       local a, b, c = msg:byte(1, 3)
-      print(a, b, c)
+--      print(a, b, c)
             
       local type = bit.band(a, 0xf0)
       local chan = bit.band(a, 0x0f) + 1
@@ -34,8 +34,8 @@ local function new(fname)
 
       if type == 0xb0 then
          each_cb("pot", function(i)
-            if i.chan == chan and i.pot == b then
-               i.fn(c/127)
+            if (not i.chan or i.chan == chan) and (not i.pot or i.pot == b) then
+               i.fn(chan, b, c/127)
             end
          end)
       end

@@ -119,10 +119,12 @@ end)
 
 local t = 0
 
+p.signal(p.SIGINT, os.exit)
+
 print("Ready")
 
 
-dofile("prjs/test.lua")
+safecall(dofile, arg[1])
 
 
 while true do

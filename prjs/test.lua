@@ -30,13 +30,16 @@ mi:on_pot(1, 6, function(a) d = a * 4 end)
 
 local n = 0
 
-dsp = Jack.new("flop", function(t)
+function do_dsp(t)
 	local v = math.tanh(osc()  * d) * mul
 	local n = noise()
 	if n < nl2 then v = v + 0.5 end
 	v = v + n * v * nl
 	return v, v
-end)
+end
+
+Jack.new("flop", { "output:left", "output:right" }, do_dsp)
+
 
 function rl(as)
 	return as[math.random(1, #as)]

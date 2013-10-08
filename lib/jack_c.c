@@ -80,7 +80,6 @@ static int l_open(lua_State *L)
 {
 	int i;
 	int fd[2];
-	const char **ports;
 	const char *client_name = luaL_checkstring(L, 1);
 	const char *server_name = NULL;
 	jack_options_t options = JackNullOption;
@@ -88,7 +87,10 @@ static int l_open(lua_State *L)
 
 	struct jack *jack = lua_newuserdata(L, sizeof *jack);
 	memset(jack, 0, sizeof *jack);
-	
+
+        lua_getfield(L, LUA_REGISTRYINDEX, "jack_c");
+	lua_setmetatable(L, -2);
+
 	jack->client = jack_client_open (client_name, options, &status, server_name);
 	if (jack->client == NULL) {
 		fprintf(stderr, "jack_client_open() failed, " "status = 0x%2.0x\n", status);
@@ -129,6 +131,8 @@ static int l_open(lua_State *L)
 		fprintf (stderr, "cannot activate client");
 		exit (1);
 	}
+
+	const char **ports;
 
 	ports = jack_get_ports(jack->client, NULL, NULL, JackPortIsPhysical|JackPortIsInput);
 	if (ports) {
@@ -171,7 +175,7 @@ static int l_open(lua_State *L)
 static int l_write(lua_State *L)
 {
 	int i;
-	struct jack *jack = lua_touserdata(L, 1);
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
 
 	for(i=0; i<MAX_PORTS; i++) {
 		jack_port_t *p = jack->port[i];
@@ -194,7 +198,7 @@ static int l_read(lua_State *L)
 {
 	int i;
 	int n = 0;
-	struct jack *jack = lua_touserdata(L, 1);
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
 
 	for(i=0; i<MAX_PORTS; i++) {
 		jack_port_t *p = jack->port[i];
@@ -213,11 +217,38 @@ static int l_read(lua_State *L)
 	return n;
 }
 
+
+static int l_connect(lua_State *L)
+{
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	const char *p1 = luaL_checkstring(L, 2);
+	const char *p2 = luaL_checkstring(L, 3);
+
+	int r = jack_connect(jack->client, p1, p2);
+	lua_pushnumber(L, r);
+	return 1;
+}
+
+
+static int l_disconnect(lua_State *L)
+{
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	const char *p1 = luaL_checkstring(L, 2);
+	const char *p2 = luaL_checkstring(L, 3);
+
+	int r = jack_disconnect(jack->client, p1, p2);
+	lua_pushnumber(L, r);
+	return 1;
+}
+
+
 static struct luaL_Reg jack_table[] = {
 
         { "open",		l_open },
 	{ "write",		l_write },
 	{ "read",		l_read },
+	{ "connect",		l_connect },
+	{ "disconnect",		l_disconnect },
 
         { NULL },
 };
@@ -225,6 +256,7 @@ static struct luaL_Reg jack_table[] = {
 
 int luaopen_jack_c(lua_State *L)
 {
+	luaL_newmetatable(L, "jack_c");
         luaL_register(L, "jack_c", jack_table);
 
         return 0;

@@ -6,7 +6,7 @@ Metro = require "metro"
 Jack = require "jack"
 Dsp = require "dsp"
 
-mi = Midi.new("/dev/snd/midiC1D0")
+mi = Midi.new("/dev/snd/by-id/usb-AKAI_PROFESSIONAL_LP_MPK_mini-00")
 synth = Fs.new("/usr/share/sounds/sf2/FluidR3_GM.sf2")
 master = Mixer.new("Master")
 headphone = Mixer.new("PCM")

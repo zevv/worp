@@ -14,12 +14,22 @@ local function new(name, port_list, fn)
       p.read(fd, 1)
 
       local ok = safecall(function()
-         for i = 1, 1024 do
+         for i = 1, bsize do
             jack_c.write(j, fn(t, jack_c.read(j)))
             t = t + 1/srate
          end
       end)
    end)
+
+	return {
+		connect = function(_, p1, p2)
+			return jack_c.connect(j, p1, p2)
+		end,
+
+		disconnect = function(_, p1, p2)
+			return jack_c.disconnect(j, p1, p2)
+		end,
+	}
 
 end
 

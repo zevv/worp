@@ -1,4 +1,5 @@
 
+    
 
 local function new(_, bpm, b)
 	bpm, b = bpm or 120, b or 4
@@ -13,10 +14,10 @@ local function new(_, bpm, b)
 			return spm
 		end,
 		at_meas = function(m, ...)
-			at((math.floor((t_now + 0.001) / spm) + 1) * spm, ...)
+			at((math.floor((t_now + 0.001) / spm) + 1) * spm - t_now, ...)
 		end,
 		at_beat = function(m, ...)
-			at((math.floor((t_now + 0.001) / spb) + 1) * spb, ...)
+			at((math.floor((t_now + 0.001) / spb) + 1) * spb - t_now, ...)
 		end
 	}
 end

@@ -1,4 +1,4 @@
-#!/usr/bin/luajit-2.0.0-beta9
+#!/usr/bin/luajit-2.0.0
 
 package.path = package.path .. ";./lib/?.lua"
 package.cpath = package.cpath .. ";./lib/?.so"
@@ -18,6 +18,12 @@ t_now = 0
 --
 
 function safecall(fn, ...)
+	if type(fn) == "string" then
+		fn = rawget(env, fn) or rawget(_G, fn)
+	end
+	if not fn then
+		return print("Function " .. fn .. " not defined")
+	end
 	local arg = {...}
 	local function wrapper()
 		return fn(unpack(arg))
@@ -31,7 +37,7 @@ function safecall(fn, ...)
 end
 
 
-local function time()
+function time()
 	local s, ns = p.clock_gettime(p.CLOCK_MONOTONIC)
 	local t = s + ns / 1e9
 	t_start = t_start or t
@@ -45,7 +51,7 @@ local function load_code(code)
 		setfenv(fn, env)
 		t_now = time()
 		local ok, err = safecall(fn)
-		print("ok", ok)
+		--print("ok", ok)
 	else
 		print(err)
 		print("")
@@ -84,15 +90,11 @@ end
 -- Play a note using the given sound generator
 --
 
-function play(fn, note, vol, dur, cb, ...)
-
+function play(fn, note, vol, dur)
 	fn(true, note, vol or 127)
-
-	local args = {...}
-	at(t_now + (dur or 1) * 0.99, function()
+	at(dur * 0.99, function()
 		fn(false, note, vol)
 	end)
-
 end
 
 
@@ -106,7 +108,6 @@ end
 --
 
 math.randomseed(os.time())
-local t_start = time()
 
 
 local s = p.socket(p.AF_INET, p.SOCK_DGRAM, 0)
@@ -126,6 +127,8 @@ print("Ready")
 
 safecall(dofile, arg[1])
 
+local t_start = time()
+t_now = 0
 
 while true do
 
@@ -150,14 +153,8 @@ while true do
 
 	while ev and time() > ev.t_when do
 		table.remove(ev_queue)
-		local fn = ev.fn
-		if type(ev.fn) == "string" then fn = rawget(env, ev.fn) or rawget(_G, ev.fn) end
-		if fn then
-			t_now = ev.t_when
-			safecall(fn, unpack(ev.args))
-		else
-			print("Function " .. ev.fn .. " not defined")
-		end
+		t_now = ev.t_when
+		safecall(ev.fn, unpack(ev.args))
 		ev = ev_queue[#ev_queue]
 	end
 

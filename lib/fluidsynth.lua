@@ -10,6 +10,7 @@ typedef struct fluid_audio_driver_t *fluid_audio_driver_t;
 fluid_settings_t *new_fluid_settings(void);
 int fluid_settings_setstr(fluid_settings_t* settings, const char *name, const char *str);
 int fluid_settings_setint(fluid_settings_t* settings, const char *name, int val);
+int fluid_settings_setnum(fluid_settings_t* settings, const char *name, double val);
 fluid_synth_t* new_fluid_synth(fluid_settings_t* settings);
 fluid_audio_driver_t* new_fluid_audio_driver(fluid_settings_t* settings, fluid_synth_t* synth); 
 int fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets);
@@ -25,7 +26,10 @@ local function new(fname)
    local settings = fs.new_fluid_settings()
    fs.fluid_settings_setstr(settings, "synth.reverb.active", "yes");
    fs.fluid_settings_setint(settings, "synth.polyphony", 128);
+   fs.fluid_settings_setint(settings, "synth.audio-channels", 8);
    fs.fluid_settings_setstr(settings, "audio.jack.autoconnect", "yes");
+   fs.fluid_settings_setstr(settings, "audio.jack.multi", "yes");
+   fs.fluid_settings_setnum(settings, "synth.gain", 0.5)
 
    local synth = fs.new_fluid_synth(settings);
    local adriver = fs.new_fluid_audio_driver(settings, synth);

@@ -18,13 +18,13 @@ piano = function(onoff, key, vel) synth:note(onoff, 1, key, vel) end
 violin = function(onoff, key, vel) synth:note(onoff, 2, key, vel) end
 bass = function(onoff, key, vel) synth:note(onoff, 3, key, vel) end
 
-f = Dsp.filter("lp", 1000, 5)
+f = Dsp.filter("lp", 500, 5)
+r = Dsp.reverb(0.7, 0.5, 1, 0.1)
 
 local jack = Jack.new("flop", 
 	{ "out_l", "out_r", "in_l", "in_r" }, 
 	function(t, i1, i2)
-		local v = f(i1)
-		return v, v
+		return r(f(i1, i2))
 	end)
 
 midi:on_pot(1, 1, function(channel, cc, v) f("f0", math.exp(v * 10)) end)

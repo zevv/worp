@@ -11,19 +11,6 @@ return {
 		end
 	end,
 
-	lp = function(alpha)
-		local vavg = 0
-		local _alpha = 1 - alpha
-		return function(v, n)
-			if v == "set" then
-				alpha, _alpha = n, 1 - n
-				return
-			end
-			vavg = vavg * alpha + v * _alpha
-			return vavg
-		end
-	end,
-
 	noise = function()
 		return math.random
 	end,
@@ -79,9 +66,9 @@ return {
 
 	filter = function(ft, f0, Q)
 
-		-- http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
+		-- Biquads, based on http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
 
-		local Fs = 44100
+		local fs = 44100
 		local ft = ft or "lp"
 		local f0 = f0 or 1000
 		local Q = Q or 1
@@ -91,7 +78,7 @@ return {
 
 		local function calc()
 
-			local w0 = 2 * math.pi * (f0 / Fs)
+			local w0 = 2 * math.pi * (f0 / fs)
 			local alpha = math.sin(w0) / (2*Q)
 			local cos_w0 = math.cos(w0)
 
@@ -111,7 +98,7 @@ return {
 				b0, b1, b2 = 1 - alpha, -2*cos_w0, 1 + alpha
 				a0, a1, a2 = 1 + alpha, -2 *cos_w0, 1 - alpha
 			else
-				error("Unssuported filter type " .. ft)
+				error("Unsupported filter type " .. ft)
 			end
 		end
 
@@ -135,6 +122,111 @@ return {
 		end
 	
 	end,
+
+	reverb = function(wet, dry, room, damp)
+
+		-- based on Jezar's public domain C++ sources,
+
+		local function allpass(bufsize)
+			local buffer = {}
+			local feedback = 0
+			local bufidx = 0
+			return function(input)
+				local bufout = buffer[bufidx] or 0
+				local output = -input + bufout
+				buffer[bufidx] = input + (bufout*feedback)
+				bufidx = (bufidx + 1) % bufsize
+				return output
+			end
+		end
+
+		local function comb(bufsize, feedback, damp)
+			local buffer = {}
+			local bufidx = 0
+			local damp1 = damp
+			local damp2 = 1 - damp
+			local filterstore = 0
+			return function(input)
+				local output = buffer[bufidx] or 0
+				local filterstore = (output*damp2) + (filterstore*damp1)
+				buffer[bufidx] = input + (filterstore*feedback)
+				bufidx = (bufidx + 1) % bufsize
+				return output
+			end
+		end
+
+		local fixedgain = 0.015
+		local scalewet = 3
+		local scaledry = 2
+		local scaledamp = 0.4
+		local scaleroom = 0.28
+		local offsetroom = 0.7
+		local initialroom = room or 0.5
+		local initialdamp = damp or 0.5
+		local initialwet = (wet or 1)/scalewet
+		local initialdry = dry or 0
+		local initialwidth = 2
+		local initialmode = 0
+		local stereospread = 23
+
+		local wet = initialwet * scalewet
+		local roomsize = (initialroom*scaleroom) + offsetroom
+		local dry = initialdry * scaledry
+		local damp = initialdamp * scaledamp
+		local width = initialwidth
+		local mode = initialmode
+
+		local wet1 = wet*(width/2 + 0.5)
+		local wet2 = wet*((1-width)/2)
+
+		local roomsize1 = roomsize
+		local damp1 = damp
+		local gain = fixedgain
+
+		local comb, allp = { 
+			{
+				comb(1116, roomsize1, damp1), comb(1188, roomsize1, damp1), 
+				comb(1277, roomsize1, damp1), comb(1356, roomsize1, damp1),
+				comb(1422, roomsize1, damp1), comb(1491, roomsize1, damp1), 
+				comb(1557, roomsize1, damp1), comb(1617, roomsize1, damp1),
+			}, {
+				comb(1116+stereospread, roomsize1, damp1), comb(1188+stereospread, roomsize1, damp1),
+				comb(1277+stereospread, roomsize1, damp1), comb(1356+stereospread, roomsize1, damp1),
+				comb(1422+stereospread, roomsize1, damp1), comb(1491+stereospread, roomsize1, damp1),
+				comb(1557+stereospread, roomsize1, damp1), comb(1617+stereospread, roomsize1, damp1),
+			}
+		}, {
+			{ 
+				allpass(556), allpass(441), allpass(341), allpass(225), 
+			}, { 
+				allpass(556+stereospread), allpass(441+stereospread), 
+				allpass(341+stereospread), allpass(225+stereospread), 
+			}
+		}
+
+		return function(in1, in2)
+			in2 = in2 or in1
+			local input = (in1 + in2) * gain
+			
+			local out = { 0, 0 }
+
+			for c = 1, 2 do
+				for i = 1, #comb[c] do
+					out[c] = out[c] + comb[c][i](input)
+				end
+				for i = 1, #allp[c] do
+					out[c] = allp[c][i](out[c])
+				end
+			end
+
+			local out1 = out[1]*wet1 + out[2]*wet2 + in1*dry
+			local out2 = out[2]*wet1 + out[1]*wet2 + in2*dry
+
+			return out1, out2
+		end
+
+	end
+
 
 }
 

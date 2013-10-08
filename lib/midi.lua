@@ -2,7 +2,10 @@
 
 local function new(fname)
 
-   local fd = p.open(fname, p.O_RDWR)
+   local fd, err = p.open(fname, p.O_RDWR)
+	if not fd then
+		error("Error opening midi device: " .. err)
+	end
 
    local cb_list = {
       key = {},

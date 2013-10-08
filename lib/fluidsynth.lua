@@ -28,7 +28,7 @@ local function new(fname)
    fs.fluid_settings_setint(settings, "synth.polyphony", 128);
    fs.fluid_settings_setint(settings, "synth.audio-channels", 8);
    fs.fluid_settings_setstr(settings, "audio.jack.autoconnect", "yes");
-   fs.fluid_settings_setstr(settings, "audio.jack.multi", "yes");
+   --fs.fluid_settings_setstr(settings, "audio.jack.multi", "yes");
    fs.fluid_settings_setnum(settings, "synth.gain", 0.5)
 
    local synth = fs.new_fluid_synth(settings);

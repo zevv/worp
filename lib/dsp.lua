@@ -2,6 +2,7 @@
 return {
 
 	delay = function(s)
+		s = s * 44100
 		local head = 1
 		local buf = {}
 		return function(v)

@@ -6,7 +6,7 @@ require "strict"
 
 p = require "posix"
 
-local env = setmetatable({}, { __index = _G })
+env = setmetatable({}, { __index = _G })
 local ev_queue = {}
 local t_start = nil
 local fds = {}

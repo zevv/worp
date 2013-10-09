@@ -14,6 +14,8 @@ local function new(name, port_list, fn)
       p.read(fd, 1)
 
       local ok = safecall(function()
+			local fn = fn
+			if type(fn) == "string" then fn = env[fn] end
          for i = 1, bsize do
             jack_c.write(j, fn(t, jack_c.read(j)))
             t = t + 1/srate

@@ -1,14 +1,12 @@
 
-Midi = require "midi"
-Mixer = require "mixer"
-Metro = require "metro"
-Jack = require "jack"
-Dsp = require "dsp"
-Fs = require "fluidsynth"
+-- 
+-- Simple 4 track looper controlled by Akai MKP mini
+--
 
-mi = Midi.new("/dev/snd/midiC2D0")
-master = Mixer.new("Master")
-synth = Fs.new("/usr/share/sounds/sf2/FluidR3_GM.sf2")
+Mixer = require "mixer"
+Jack = require "jack"
+
+jack = Jack.new("worp")
 
 local function pan(v, p)
 	return math.max(1 - p, 1) * v, math.max(1 + p, 1) * v
@@ -59,50 +57,52 @@ end
 
 local rec = nil
 
-Jack.new("flop", 
-	{ "output:left", "output:right", "input:l", "input:r" }, 
-	function(t, i1, i2)
-		local o1, o2 = 0, 0
-		for i = 1,8 do
-			local t1, t2 = loop[i]:run(i1)
-			o1 = o1 + t1
-			o2 = o2 + t2
-		end
-		return o1, o2
-	end)
-
-print("Go")
-mi:on_key(1, function(onoff, channel, note, vel)
-	synth:note(onoff, 1, note, vel)
+jack:dsp("looper", 1, 2, function(t, i1)
+	local o1, o2 = 0, 0
+	for i = 1,8 do
+		local t1, t2 = loop[i]:run(i1)
+		o1 = o1 + t1
+		o2 = o2 + t2
+	end
+	return o1, o2
 end)
 
-mi:on_key(5, function(onoff, channel, note, vel)
 
-	if note >= 48 then
-		local i = note - 47
-		loop[i].rec = onoff
-		print("REC", i, onoff)
-	elseif note >= 44 then
-		local i = note - 43 
-		print("CLEAR", i)
-		if onoff then
-			for j = 1, #loop[i].buf do
-				loop[i].buf[j] = 0
+jack:midi("midi", function(channel, t, d1, d2)
+
+	if t == "noteon" or t == "noteoff" then
+		local onoff = t == "noteon"
+		local note = d1
+		if note >= 48 then
+			local i = note - 47
+			loop[i].rec = onoff
+			print("REC", i, onoff)
+		elseif note >= 44 then
+			local i = note - 43 
+			print("CLEAR", i)
+			if onoff then
+				for j = 1, #loop[i].buf do
+					loop[i].buf[j] = 0
+				end
 			end
 		end
 	end
-end)
 
-mi:on_pot(1, nil, function(chan, pot, v)
-	if pot > 4 then
-		loop[pot-4].pan = v * 2 - 1
-	else
-		loop[pot].vol = v
+	if t == "cc" then
+		local v = d2 / 127
+		if d1 > 4 then
+			loop[d1-4].pan = v * 2 - 1
+		else
+			loop[d1].vol = v
+		end
 	end
 end)
 
 
-print("ok")
+jack:connect("worp:looper-out-1", "system:playback_1")
+jack:connect("worp:looper-out-2", "system:playback_2")
+jack:connect("system:capture_1", "worp:looper-in-1")
+jack:connect("system:midi_capture_2", "worp:midi-in")
 
 -- vi: ft=lua ts=3 sw=3
 

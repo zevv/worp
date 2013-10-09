@@ -1,14 +1,16 @@
 
+--
+-- Some generated music with effects
+--
+
 Fs = require "fluidsynth"
 Chord = require "chord"
 Metro = require "metro"
 Jack = require "jack"
 Dsp = require "dsp"
-Midi = require "midi"
 
-synth = Fs.new("/usr/share/sounds/sf2/FluidR3_GM.sf2")
-
-midi = Midi.new("/dev/snd/midiC2D0")
+synth = Fs.new("synth")
+jack = Jack.new("worp")
 
 function rl(vs)
 	return vs[math.random(1, #vs)]
@@ -18,26 +20,28 @@ piano = function(onoff, key, vel) synth:note(onoff, 1, key, vel) end
 violin = function(onoff, key, vel) synth:note(onoff, 2, key, vel) end
 bass = function(onoff, key, vel) synth:note(onoff, 3, key, vel) end
 
-f = Dsp.filter("hs", 500, 5, -3)
+f = Dsp.filter("lp", 1000, 1, -3)
 r = Dsp.reverb(0.7, 0.5, 1, 0.1)
 
-local jack = Jack.new("flop", 
-	{ "out_l", "out_r", "in_l", "in_r" }, 
-	function(t, i1, i2)
-		return r(f(i1, i2))
-	end)
+jack:dsp("fx", 2, 2, function(t, i1, i2)
+	return r(f(i1, i2))
+end)
 
-midi:on_pot(1, 1, function(channel, cc, v) f("f0", math.exp(v * 10)) end)
-midi:on_pot(1, 2, function(channel, cc, v) f("Q", math.pow(2, v*3)) end)
-midi:on_pot(1, 3, function(channel, cc, v) f("ft", ({"lp", "hp", "bp", "bs", "ap"})[math.floor(v*4)+1]) end)
-midi:on_pot(1, 4, function(channel, cc, v) f("gain", (v - 0.5) * 30) end)
+jack:midi("midi", function(channel, t, d1, d2)
+	if t == "cc" then
+		local v = d2 / 127
+		if d1 == 1 then f("f0", math.exp(v * 10)) end
+		if d1 == 2 then f("Q", math.pow(2, v*3)) end
+		if d1 == 3 then f("ft", ({"lp", "hp", "bp", "bs", "ap"})[math.floor(v*4)+1]) end
+		if d1 == 4 then f("gain", (v - 0.5) * 30) end
+	end
+end)
 
-jack:disconnect("fluidsynth:l_00", "system:playback_1")
-jack:disconnect("fluidsynth:r_00", "system:playback_2")
-jack:disconnect("system:capture_1", "flop:in_l")
-jack:disconnect("system:capture_2", "flop:in_r")
-jack:connect("fluidsynth:l_00", "flop:in_l")
-jack:connect("fluidsynth:r_00", "flop:in_r")
+jack:connect("worp:fx-out-1", "system:playback_1")
+jack:connect("worp:fx-out-2", "system:playback_2")
+jack:connect("synth:l_00", "worp:fx-in-1")
+jack:connect("synth:r_00", "worp:fx-in-2")
+jack:connect("system:midi_capture_2", "worp:midi-in")
 
 synth:program_change(1, 4)
 synth:program_change(2, 68)

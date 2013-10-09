@@ -8,6 +8,7 @@
 
 #include <jack/jack.h>
 #include <jack/ringbuffer.h>
+#include <jack/midiport.h>
 
 #include <lua.h>
 #include <lualib.h>
@@ -19,199 +20,259 @@
 #define sample_t jack_default_audio_sample_t
 
 
-struct jack {
-	int fd;
-	int direction;
-	jack_port_t *port[MAX_PORTS];
-	jack_client_t *client;
-	jack_ringbuffer_t *rb[MAX_PORTS];
+struct port {
+	int flags;
+	jack_port_t *port;
+	jack_ringbuffer_t *rb;
+	struct port *next;
 };
 
 
-static int process(jack_nframes_t nframes, void *arg)
+struct group {
+	int id;
+	int fd;
+	char *name;
+	struct port *port_list;
+	struct group *next;
+};
+
+
+struct midi {
+	jack_port_t *port;
+	int fd;
+	struct midi *next;
+};
+
+
+struct jack {
+	int fd;
+	int direction;
+	jack_client_t *client;
+	jack_port_t *port[MAX_PORTS];
+	jack_ringbuffer_t *rb[MAX_PORTS];
+	jack_port_t *midi_in;
+
+	int group_seq;
+	struct group *group_list;
+	struct midi *midi_list;
+};
+
+
+static int process2(jack_nframes_t nframes, void *arg)
 {
-	int i;
 	struct jack *jack = arg;
-	int need_food = 0;
+	struct group *group = jack->group_list;
 	int len = nframes * sizeof(sample_t);
 
-	for(i=0; i<MAX_PORTS; i++) {
-		jack_port_t *p = jack->port[i];
-		if(!p) continue;
+	while(group) {
 
-		jack_ringbuffer_t *rb = jack->rb[i];
-		int flags = jack_port_flags(p);
+		int need_data = 0;
 
-		if(flags & JackPortIsOutput) {
+		struct port *port = group->port_list;
+		while(port) {
 
-			int avail = jack_ringbuffer_read_space(rb);
-			
-			if(avail < len * 2) {
-				need_food = 1;
-			} 
+			jack_ringbuffer_t *rb = port->rb;
+			jack_port_t *p = port->port;
 
-			if(avail >= len) {
-				sample_t *buf = jack_port_get_buffer(p, nframes);
-				int r = jack_ringbuffer_read(rb, (void *)buf, len);
-				if(0 && r != len) printf("underrun\n");
+			if(port->flags == JackPortIsOutput) {
+
+				int avail = jack_ringbuffer_read_space(rb);
+
+				if(avail < len * 2) need_data = 1;
+
+				if(avail >= len) {
+					sample_t *buf = jack_port_get_buffer(p, nframes);
+					int r = jack_ringbuffer_read(rb, (void *)buf, len);
+					if(0 && r != len) printf("underrun\n");
+				}
+
 			}
-			
-		}
-	
-		if(flags & JackPortIsInput) {
-			
-			if(jack_ringbuffer_write_space(rb) >= len) {
-				sample_t *buf = jack_port_get_buffer(p, nframes);
-				int r = jack_ringbuffer_write(rb, (void *)buf, len);
-				if(0 && r != len) printf("overrun\n");
+
+			if(port->flags == JackPortIsInput) {
+
+				if(jack_ringbuffer_write_space(rb) >= len) {
+					sample_t *buf = jack_port_get_buffer(p, nframes);
+					int r = jack_ringbuffer_write(rb, (void *)buf, len);
+					if(0 && r != len) printf("overrun\n");
+				}
 			}
+
+			port = port->next;
 		}
+
+		if(need_data) {
+			write(group->fd, " ", 1);
+		}
+				
+
+		group = group->next;
 	}
 
-	if(need_food) {
-		write(jack->fd, " ", 1);
+	struct midi *midi = jack->midi_list;
+
+	while(midi) {
+		void *buf = jack_port_get_buffer(midi->port, nframes);
+		int n = jack_midi_get_event_count(buf);
+		int i;
+		for(i=0; i<n; i++) {
+			jack_midi_event_t ev;
+			jack_midi_event_get(&ev, buf, i);
+			write(midi->fd, ev.buffer, ev.size);
+		}
+		midi = midi->next;
 	}
 
 	return 0;
 }
 
 
-static int l_open(lua_State *L)
+static int l_new(lua_State *L)
 {
-	int i;
-	int fd[2];
 	const char *client_name = luaL_checkstring(L, 1);
-	const char *server_name = NULL;
 	jack_options_t options = JackNullOption;
 	jack_status_t status;
-
+	
 	struct jack *jack = lua_newuserdata(L, sizeof *jack);
 	memset(jack, 0, sizeof *jack);
-
         lua_getfield(L, LUA_REGISTRYINDEX, "jack_c");
 	lua_setmetatable(L, -2);
-
-	jack->client = jack_client_open (client_name, options, &status, server_name);
+	
+	jack->client = jack_client_open (client_name, options, &status, NULL);
 	if (jack->client == NULL) {
-		fprintf(stderr, "jack_client_open() failed, " "status = 0x%2.0x\n", status);
-		if(status & JackServerFailed) {
-			fprintf(stderr, "Unable to connect to JACK server\n");
-		}
-		exit (1);
-	}
-
-	pipe(fd);
-	jack->fd = fd[1];
-
-	for(i=0; i<MAX_PORTS; i++) {
-		lua_pushinteger(L, i+1);
-		lua_gettable(L, 2);
-
-		if(lua_isstring(L, -1)) {
-
-			const char *pname = lua_tostring(L, -1);
-
-			jack->rb[i] = jack_ringbuffer_create(RB_SIZE);
-			jack->port[i] = jack_port_register(
-						jack->client, pname, JACK_DEFAULT_AUDIO_TYPE, 
-						pname[0] == 'o' ? JackPortIsOutput : JackPortIsInput, 0);
-
-			if (jack->port[i] == NULL) {
-				fprintf(stderr, "Can not register port %s", pname);
-				exit (1);
-			}
-
-		}
-		lua_pop(L, 1);
+		lua_pushnil(L);
+		lua_pushfstring(L, "Error creating jack client, status = %x", status);
+		return 2;
 	}
 	
-	jack_set_process_callback(jack->client, process, jack);
-
-	if (jack_activate (jack->client)) {
-		fprintf (stderr, "cannot activate client");
-		exit (1);
-	}
-
-	const char **ports;
-
-	ports = jack_get_ports(jack->client, NULL, NULL, JackPortIsPhysical|JackPortIsInput);
-	if (ports) {
-		int j = 0;
-		for(i=0; i<MAX_PORTS; i++) {
-			jack_port_t *p = jack->port[i];
-			if(p && jack_port_flags(p) & JackPortIsOutput) {
-				fprintf(stderr, "connect %s -> %s\n", jack_port_name(p), ports[j]);
-				if (jack_connect(jack->client, jack_port_name(p), ports[j++])) {
-					fprintf (stderr, "cannot connect output ports\n");
-				}
-			}
-		}
-		free (ports);
-	}
+	jack_set_process_callback(jack->client, process2, jack);
+	//jack_activate (jack->client);
 	
-	ports = jack_get_ports(jack->client, NULL, NULL, JackPortIsPhysical|JackPortIsOutput);
-	if (ports) {
-		int j = 0;
-		for(i=0; i<MAX_PORTS; i++) {
-			jack_port_t *p = jack->port[i];
-			if(p && jack_port_flags(p) & JackPortIsInput) {
-				fprintf(stderr, "connect %s -> %s\n", jack_port_name(p), ports[j]);
-				if (jack_connect(jack->client, ports[j++], jack_port_name(p))) {
-					fprintf (stderr, "cannot connect output ports\n");
-				}
-			}
-		}
-		free (ports);
-	}
-	
-	lua_pushnumber(L, fd[0]);
 	lua_pushnumber(L, jack_get_sample_rate(jack->client));
 	lua_pushnumber(L, jack_get_buffer_size(jack->client));
-        return 4;
+        return 3;
+}
+	
+
+static int l_add_group(lua_State *L)
+{
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	const char *name = luaL_checkstring(L, 2);
+	int n_in = luaL_checknumber(L, 3);
+	int n_out = luaL_checknumber(L, 4);
+	int i;
+	int fd[2];
+
+	pipe(fd);
+
+	char pname[64];
+	struct group *group = calloc(sizeof *group, 1);
+	group->name = strdup(name);
+	group->id = jack->group_seq ++;
+	group->fd = fd[1];
+
+	for(i=0; i<n_in + n_out; i++) {
+
+		struct port *port = calloc(sizeof *port, 1);
+		port->flags = (i < n_in) ? JackPortIsInput : JackPortIsOutput;
+
+		snprintf(pname, sizeof(pname), "%s-%s-%d", name, (i<n_in) ? "in" : "out", (i<n_in) ? i+1 : i - n_in+1);
+
+		port->port = jack_port_register(jack->client, pname, JACK_DEFAULT_AUDIO_TYPE, port->flags, 0);
+		port->rb = jack_ringbuffer_create(RB_SIZE);
+
+		port->next = group->port_list;
+		group->port_list = port;
+	}
+
+	group->next = jack->group_list;
+	jack->group_list = group;
+	
+	jack_activate (jack->client);
+
+	lua_pushnumber(L, fd[0]);
+	lua_pushnumber(L, group->id);
+	return 2;
+}
+
+
+static int l_add_midi(lua_State *L)
+{
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	const char *name = luaL_checkstring(L, 2);
+	int fd[2];
+	char pname[64];
+
+	pipe(fd);
+
+	struct midi *midi = calloc(sizeof *midi, 1);
+
+	snprintf(pname, sizeof(pname), "%s-in", name);
+	midi->port = jack_port_register(jack->client, pname, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+	midi->fd = fd[1];
+
+	midi->next = jack->midi_list;
+	jack->midi_list = midi;
+
+	lua_pushnumber(L, fd[0]);
+	return 1;
 }
 
 
 
 static int l_write(lua_State *L)
 {
-	int i;
 	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	int gid = luaL_checknumber(L, 2);
+	int n = 3;
 
-	for(i=0; i<MAX_PORTS; i++) {
-		jack_port_t *p = jack->port[i];
-		jack_ringbuffer_t *rb = jack->rb[i];
+	struct group *group = jack->group_list;
+	while(group) {
+		if(group->id == gid) {
+			struct port *port = group->port_list;
 
-		if(p && jack_port_flags(p) & JackPortIsOutput) {
-			sample_t s = lua_tonumber(L, i+2);
-			if(jack_ringbuffer_write_space(rb) >= sizeof s) {
-				jack_ringbuffer_write(rb, (void *)&s, sizeof s);
+			while(port) {
+				if(port->flags == JackPortIsOutput) {
+					sample_t s = lua_tonumber(L, n++);
+					if(jack_ringbuffer_write_space(port->rb) >= sizeof s) {
+						jack_ringbuffer_write(port->rb, (void *)&s, sizeof s);
+					}
+				}
+				port = port->next;
 			}
 		}
+		group = group->next;
 	}
+
 
 	return 0;
 }
 
 
-
 static int l_read(lua_State *L)
 {
-	int i;
 	int n = 0;
 	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	int gid = luaL_checknumber(L, 2);
 
-	for(i=0; i<MAX_PORTS; i++) {
-		jack_port_t *p = jack->port[i];
-		jack_ringbuffer_t *rb = jack->rb[i];
+	struct group *group = jack->group_list;
+	while(group) {
+		if(group->id == gid) {
+			struct port *port = group->port_list;
 
-		if(p && jack_port_flags(p) & JackPortIsInput) {
-			sample_t s = 0;
-			if(jack_ringbuffer_read_space(rb) >= sizeof s) {
-				jack_ringbuffer_read(rb, (void *)&s, sizeof s);
-				lua_pushnumber(L, s);
-				n++;
+			while(port) {
+				if(port->flags == JackPortIsInput) {
+					sample_t s = 0;
+					if(jack_ringbuffer_read_space(port->rb) >= sizeof s) {
+						jack_ringbuffer_read(port->rb, (void *)&s, sizeof s);
+
+					}
+					lua_pushnumber(L, s);
+					n++;
+				}
+				port = port->next;
 			}
 		}
+		group = group->next;
 	}
 
 	return n;
@@ -244,7 +305,10 @@ static int l_disconnect(lua_State *L)
 
 static struct luaL_Reg jack_table[] = {
 
-        { "open",		l_open },
+        { "new",		l_new },
+        { "add_group",		l_add_group },
+        { "add_midi",		l_add_midi },
+
 	{ "write",		l_write },
 	{ "read",		l_read },
 	{ "connect",		l_connect },

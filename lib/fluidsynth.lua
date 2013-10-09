@@ -20,14 +20,15 @@ int fluid_synth_noteon(fluid_synth_t* synth, int chan, int key, int vel);
 int fluid_synth_noteoff(fluid_synth_t* synth, int chan, int key, int vel);
 ]]
 
-local function new(fname)
+local function new(name, fname)
 
+	name = name or "Fluidsynth"
+	fname = fname or "/usr/share/sounds/sf2/FluidR3_GM.sf2"
 
    local settings = fs.new_fluid_settings()
-   fs.fluid_settings_setstr(settings, "synth.reverb.active", "yes");
+   fs.fluid_settings_setstr(settings, "audio.jack.id", name)
    fs.fluid_settings_setint(settings, "synth.polyphony", 128);
-   --fs.fluid_settings_setint(settings, "synth.audio-channels", 8);
-   fs.fluid_settings_setstr(settings, "audio.jack.autoconnect", "yes");
+   --fs.fluid_settings_setint(settings, "synth.audio-channels", 4);
    --fs.fluid_settings_setstr(settings, "audio.jack.multi", "yes");
    fs.fluid_settings_setnum(settings, "synth.gain", 0.5)
 

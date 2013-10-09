@@ -12,9 +12,11 @@ return {
 		end
 	end,
 
+
 	noise = function()
 		return math.random
 	end,
+
 
 	osc = function(freq)
 		local srate = 44100
@@ -32,6 +34,7 @@ return {
 		return fn
 	end,
 
+
 	saw = function(freq)
 		local v, dv = 0
 		local fn = function(f)
@@ -43,6 +46,7 @@ return {
 		fn(freq)
 		return fn
 	end,
+
 
 	adsr = function(a, d, s, r)
 		local v, state, dv = 0, nil, 0
@@ -65,9 +69,10 @@ return {
 		end
 	end,
 
-	filter = function(ft, f0, Q, gain)
+		
+	-- Biquads, based on http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
 
-		-- Biquads, based on http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
+	filter = function(ft, f0, Q, gain)
 
 		local fs = 44100
 		local ft = ft or "lp"
@@ -164,9 +169,10 @@ return {
 	
 	end,
 
-	reverb = function(wet, dry, room, damp)
+		
+	-- based on Jezar's public domain C++ sources,
 
-		-- based on Jezar's public domain C++ sources,
+	reverb = function(wet, dry, room, damp)
 
 		local function allpass(bufsize)
 			local buffer = {}
@@ -266,6 +272,33 @@ return {
 			return out1, out2
 		end
 
+	end,
+
+		
+	-- Very naive pitch shifter
+	
+	pitchshift = function(factor, size)
+
+		size = size or 4000
+		local buf = {}
+		local head = 0
+		local tail = 0
+
+		for i = 0, size do buf[i] = 0 end
+
+		return function(v, arg)
+			if v == "factor" then
+				factor = arg
+				return
+			end
+			head = (head + factor) % size
+			tail = (tail + 1) % size
+			buf[tail] = v
+			local i1 = math.floor(head)
+			local i2 = (i1 + 1) % size
+			local f = head - i1
+			return buf[i1] * (1-f) + buf[i2] * f
+		end
 	end
 
 

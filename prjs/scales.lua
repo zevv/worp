@@ -18,7 +18,7 @@ piano = function(onoff, key, vel) synth:note(onoff, 1, key, vel) end
 violin = function(onoff, key, vel) synth:note(onoff, 2, key, vel) end
 bass = function(onoff, key, vel) synth:note(onoff, 3, key, vel) end
 
-f = Dsp.filter("lp", 500, 5)
+f = Dsp.filter("hs", 500, 5, -3)
 r = Dsp.reverb(0.7, 0.5, 1, 0.1)
 
 local jack = Jack.new("flop", 
@@ -30,6 +30,7 @@ local jack = Jack.new("flop",
 midi:on_pot(1, 1, function(channel, cc, v) f("f0", math.exp(v * 10)) end)
 midi:on_pot(1, 2, function(channel, cc, v) f("Q", math.pow(2, v*3)) end)
 midi:on_pot(1, 3, function(channel, cc, v) f("ft", ({"lp", "hp", "bp", "bs", "ap"})[math.floor(v*4)+1]) end)
+midi:on_pot(1, 4, function(channel, cc, v) f("gain", (v - 0.5) * 30) end)
 
 jack:disconnect("fluidsynth:l_00", "system:playback_1")
 jack:disconnect("fluidsynth:r_00", "system:playback_2")

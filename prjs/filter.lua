@@ -9,8 +9,9 @@ m = Midi.new("/dev/snd/midiC2D0")
 local f = Dsp.filter("bp", 1000, 5)
 
 m:on_pot(1, 1, function(channel, cc, v) f("f0", math.exp(v * 10)) end)
-m:on_pot(1, 2, function(channel, cc, v) f("Q", math.pow(5, v*3) - 0.99) end)
-m:on_pot(1, 3, function(channel, cc, v) f("ft", ({"lp", "hp", "bp", "bs", "ap"})[math.floor(v*4)+1]) end)
+m:on_pot(1, 2, function(channel, cc, v) f("Q", math.pow(5, v*3) - 0.99) print(math.pow(5, v*3) - 0.99) end)
+m:on_pot(1, 3, function(channel, cc, v) f("ft", ({"lp", "hp", "bp", "bs", "ap", "ls", "hs", "eq"})[math.floor(v*7)+1]) end)
+m:on_pot(1, 4, function(channel, cc, v) f("gain", (v - 0.5) * 60) end)
 
 local osc = Dsp.osc(1000)
 
@@ -26,7 +27,7 @@ local r = Dsp.reverb()
 Jack.new("flop", 
 	{ "output_left", "output_right", "input_l", "input_r" }, 
 	function(t, i1, i2)
-		return r(i1)
+		return f(math.random()) * 0.2
 	end)
 
 

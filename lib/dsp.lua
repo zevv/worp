@@ -64,13 +64,14 @@ return {
 		end
 	end,
 
-	filter = function(ft, f0, Q)
+	filter = function(ft, f0, Q, gain)
 
 		-- Biquads, based on http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
 
 		local fs = 44100
 		local ft = ft or "lp"
 		local f0 = f0 or 1000
+		local gain = gain or 0
 		local Q = Q or 1
 		local a0, a1, a2, b0, b1, b2
 		local x0, x1, x2 = 0, 0, 0
@@ -81,22 +82,60 @@ return {
 			local w0 = 2 * math.pi * (f0 / fs)
 			local alpha = math.sin(w0) / (2*Q)
 			local cos_w0 = math.cos(w0)
+			local A = math.pow(10, gain/40)
 
+			-- High pass
+			
 			if ft == "hp" then
 				b0, b1, b2 = (1 + cos_w0)/2, -(1 + cos_w0), (1 + cos_w0)/2
 				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+			-- Low pass
+
 			elseif ft == "lp" then
 				b0, b1, b2 = (1 - cos_w0)/2, 1 - cos_w0, (1 - cos_w0)/2
 				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+			-- Band pass
+
 			elseif ft == "bp" then
 				b0, b1, b2 = Q*alpha, 0, -Q*alpha
 				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+			-- Band stop
+
 			elseif ft == "bs" then
 				b0, b1, b2 = 1, -2*cos_w0, 1
 				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+			-- Low shelf
+
+			elseif ft == "ls" then
+				local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
+				local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
+				b0, b1, b2 = A*( ap1 - am1_cos_w0 + tsAa ), 2*A*( am1 - ap1_cos_w0 ), A*( ap1 - am1_cos_w0 - tsAa )
+				a0, a1, a2 = ap1 + am1_cos_w0 + tsAa, -2*( am1 + ap1_cos_w0 ), ap1 + am1_cos_w0 - tsAa
+
+			-- High shelf
+
+			elseif ft == "hs" then
+				local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
+				local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
+				b0, b1, b2 = A*( ap1 + am1_cos_w0 + tsAa ), -2*A*( am1 + ap1_cos_w0 ), A*( ap1 + am1_cos_w0 - tsAa )
+				a0, a1, a2 = ap1 - am1_cos_w0 + tsAa, 2*( am1 - ap1_cos_w0 ), ap1 - am1_cos_w0 - tsAa
+
+			-- Peaking EQ
+
+			elseif ft == "eq" then
+				b0, b1, b2 = 1 + alpha*A, -2*cos_w0, 1 - alpha*A
+				a0, a1, a2 = 1 + alpha/A, -2*cos_w0, 1 - alpha/A
+
+			-- All pass
+
 			elseif ft == "ap" then
 				b0, b1, b2 = 1 - alpha, -2*cos_w0, 1 + alpha
-				a0, a1, a2 = 1 + alpha, -2 *cos_w0, 1 - alpha
+				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
 			else
 				error("Unsupported filter type " .. ft)
 			end
@@ -110,6 +149,7 @@ return {
 				if x0 == "ft" then ft = arg end
 				if x0 == "f0" then f0 = arg end
 				if x0 == "Q" then Q = arg end
+				if x0 == "gain" then gain = arg end
 				return calc()
 			end
 

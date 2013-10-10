@@ -125,7 +125,9 @@ p.signal(p.SIGINT, os.exit)
 print("Ready")
 
 
-safecall(dofile, arg[1])
+if arg[1] then
+	load_code(io.open(arg[1]):read("*a"))
+end
 
 local t_start = time()
 t_now = 0

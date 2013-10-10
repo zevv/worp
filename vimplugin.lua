@@ -11,7 +11,7 @@ local function send(code)
 end
 
 
-function liveplay(what)
+function worp(what)
 
 	local b = vim.buffer()
 
@@ -56,11 +56,11 @@ function liveplay(what)
 
 end
 
-vim.command(':noremap ,a :lua liveplay("all")<CR>')
-vim.command(':noremap ,f :lua liveplay("function")<CR>')
-vim.command(':noremap ,p :lua liveplay("paragraph")<CR>')
-vim.command(':noremap ,v :lua liveplay("visual")<CR>')
-vim.command(':noremap ,, :lua liveplay("stop")<CR>')
-vim.command(':noremap <CR> :lua liveplay("line")<CR>')
+vim.command(':noremap ,a :lua worp("all")<CR>')
+vim.command(':noremap ,f :lua worp("function")<CR>')
+vim.command(':noremap ,p :lua worp("paragraph")<CR>')
+vim.command(':noremap ,v :lua worp("visual")<CR>')
+vim.command(':noremap ,, :lua worp("stop")<CR>')
+vim.command(':noremap <CR> :lua worp("line")<CR>')
 
 -- vi: ft=lua ts=3 sw=3

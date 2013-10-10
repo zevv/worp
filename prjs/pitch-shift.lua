@@ -1,123 +1,105 @@
 
 --
--- Pitch shifter test. Inspired by http://dafx.labri.fr/main/papers/p007.pdf
+-- Pitch shifter. Inspired by http://dafx.labri.fr/main/papers/p007.pdf
 --
 
 Jack = require "jack"
 Dsp = require "dsp"
 
-jack = Jack.new("worp")
 
-pitchshift = function(factor)
+function pitchshift(factor)
 
+	local pr, prn, pw = 0, 0, 0
+	local size = 0x10000
 	local buf = {}
-	local buf_lp = {}
-	local lp = Dsp.filter("lp", "600", 1)
-	local p_read_new = 0
-	local xfade = 0
+	local nmix = 50
+	local mix = 0
+	local dmax = 1200 
+	local win = 250
+	local step = 10
+	
+	local floor = math.floor
 
-	local n_dist = 1500
-	local n_search = 400
-	local n_window = 50
-	local n_xfade = 50
-	local size = 2048
-	local p_read = size / 2
-	local p_write = size / 2
+	for i = 0, size do buf[i] = 0 end
 
-	for i = 0, size do 
-		buf[i] = 0 
-		buf_lp[i] = 0
+	local function wrap(i)
+		return i % size
 	end
 
-	-- Find the position between p_to and p_to+n_search with the best
-	-- correlation to p_from
-	
-	local function search(p_from, p_to)
-
-		p_from = math.floor(p_from) % size
-		p_to = math.floor(p_to) % size
-
-		local tmax = 0
-		local imax = 0
-
-		for i = 0, n_search - n_window do
-			local p1 = p_from
-			local p2 = (p_to + i) % size
-			local t = 0
-			for j = 0, n_window do
-				t = t + buf_lp[p1] * buf_lp[p2]
-				p1 = (p1 + 1) % size
-				p2 = (p2 + 1) % size
-			end
-			if t > tmax then
-				tmax = t
-				imax = i
-			end
-		end
-
-		return (p_to + imax) % size
+	local function read(i) 
+		return buf[floor(wrap(i))] 
 	end
-
-	-- Read value from buffer using 4 point interpolation
 	
-	local function read(fi)
-
-		local i = math.floor(fi)
-		local count
+	local function read4(fi)
+		local i = floor(fi)
 		local f = fi - i
-		local a = buf[(i-1) % size]
-		local b = buf[(i+0) % size]
-		local c = buf[(i+1) % size]
-		local d = buf[(i+2) % size]
+		local a, b, c, d = read(i-1), read(i), read(i+1), read(i+2)
 		local c_b = c-b
 		return b + f * ( c_b - 0.16667 * (1.-f) * ( (d - a - 3*c_b) * f + (d + 2*a - 3*b)))
 	end
 
-	return function(v, arg)
-		if v == "factor" then
+	local function find(pf, pt1, pt2)
+
+		local cmax, ptmax = 0, pt1
+
+		for pt = pt1, pt2-win, step do
+			local c = 0
+			for i = 0, win-1, step do
+				c = c + read(pf+i) * read(pt+i)
+			end
+			if c > cmax then
+				cmax = c
+				ptmax = pt
+			end
+		end
+
+		return ptmax
+	end
+
+	return function(vi, arg)
+		
+		if vi == "factor" then
 			print(arg)
 			factor = arg
 			return
 		end
 
-		p_write = (p_write + 1) % size
-		buf[p_write] = v
-		buf_lp[p_write] = lp(v)
+		buf[pw] = vi
+		vo = read4(pr)
 		
-		p_read = (p_read + factor) % size
-		p_read_new = (p_read_new + factor) % size
+		if mix > 0 then
+			local f = mix / nmix
+			vo = vo * f + read4(prn) * (1-f)
+			mix = mix - 1
+			if mix == 0 then pr = prn end
+		end
 
-		if xfade == 0 then
-			if factor < 1 then 
-				local dist = (p_write - p_read) % size
-				if dist >= n_dist then
-					p_read_new = search(p_read, p_write - n_search)
-					xfade = n_xfade
+		if mix == 0 then
+			local d = (pw - pr) % size
+			if factor < 1 then
+				if d > dmax then
+					mix = nmix
+					prn = find(pr, pr+dmax/2, pr+dmax)
 				end
 			else
-				local dist = (p_write - p_read) % size
-				if dist <= n_xfade or dist > n_dist then
-					p_read_new = search(p_read, p_write - n_dist)
-					xfade = n_xfade
+				if d < win or d > dmax * 2 then
+					mix = nmix
+					prn = find(pr, pr-dmax, pr-win)
 				end
 			end
 		end
-	
-		if xfade > 0 then
-			local f1 = xfade / n_xfade
-			local f2 = 1 - f1
-			xfade = xfade - 1
-			if xfade == 0 then p_read = p_read_new end
-			return read(p_read) * f1 + read(p_read_new) * f2
-		else
-			return read(p_read)
-		end
+
+		pw = wrap(pw + 1)
+		pr = wrap(pr + factor)
+		prn = wrap(prn + factor)
+
+		return vo
 	end
 end
 
-
-local f = Dsp.filter("hp", 100, 1)
-local s = pitchshift(1.059)
+jack = Jack.new("worp")
+s = pitchshift(1.2)
+o = Dsp.osc(80)
 
 jack:midi("midi", function(channel, t, d1, d2)
 	if t == "cc" then
@@ -128,14 +110,14 @@ end)
 
 
 jack:dsp("fx", 1, 1, function(t, i)
-	return s(f(i))
+	return s(i)
 end)
 
 
 jack:connect("worp:fx-out-1", "system:playback_1")
 jack:connect("worp:fx-out-1", "system:playback_2")
-jack:connect("system:capture_1", "worp:fx-in-1")
-jack:connect("system:midi_capture_2", "worp:midi-in")
+--jack:connect("system:capture_1", "worp:fx-in-1")
+jack:connect("system:midi_capture_4", "worp:midi-in")
 jack:connect("moc:output0", "worp:fx-in-1")
 
 

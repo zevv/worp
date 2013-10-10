@@ -1,6 +1,6 @@
 
 --
--- Pitch shifter test. 
+-- Pitch shifter test. Inspired by http://dafx.labri.fr/main/papers/p007.pdf
 --
 
 Jack = require "jack"
@@ -117,7 +117,7 @@ end
 
 
 local f = Dsp.filter("hp", 100, 1)
-local s = pitchshift(1.333)
+local s = pitchshift(1.059)
 
 jack:midi("midi", function(channel, t, d1, d2)
 	if t == "cc" then
@@ -134,7 +134,7 @@ end)
 
 jack:connect("worp:fx-out-1", "system:playback_1")
 jack:connect("worp:fx-out-1", "system:playback_2")
---jack:connect("system:capture_1", "worp:fx-in-1")
+jack:connect("system:capture_1", "worp:fx-in-1")
 jack:connect("system:midi_capture_2", "worp:midi-in")
 jack:connect("moc:output0", "worp:fx-in-1")
 

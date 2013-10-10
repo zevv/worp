@@ -36,6 +36,7 @@ return {
 
 
 	saw = function(freq)
+		local srate = 44100
 		local v, dv = 0
 		local fn = function(f)
 			if f then dv = f/srate end

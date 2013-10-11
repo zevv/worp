@@ -1,4 +1,4 @@
-#!/usr/bin/luajit-2.0.0
+#!/usr/bin/luajit
 
 package.path = package.path .. ";./lib/?.lua"
 package.cpath = package.cpath .. ";./lib/?.so"

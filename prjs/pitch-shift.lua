@@ -98,7 +98,7 @@ function pitchshift(factor)
 end
 
 jack = Jack.new("worp")
-s = pitchshift(1.2)
+s = pitchshift(0.75)
 o = Dsp.osc(80)
 
 jack:midi("midi", function(channel, t, d1, d2)
@@ -110,13 +110,13 @@ end)
 
 
 jack:dsp("fx", 1, 1, function(t, i)
-	return s(i)
+	return (s(i) + i) * 0.5
 end)
 
 
 jack:connect("worp:fx-out-1", "system:playback_1")
 jack:connect("worp:fx-out-1", "system:playback_2")
-jack:connect("system:capture_1", "worp:fx-in-1")
+jack:connect("Mic:capture_1", "worp:fx-in-1")
 jack:connect("system:midi_capture_4", "worp:midi-in")
 jack:connect("moc:output0", "worp:fx-in-1")
 

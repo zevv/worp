@@ -1,4 +1,6 @@
 
+srate = 44100
+
 return {
 
 	delay = function(s)
@@ -19,7 +21,6 @@ return {
 
 
 	osc = function(freq)
-		local srate = 44100
 		local cos = math.cos
 		local i, di = 0, 0
 		local fn = function(f)
@@ -36,7 +37,6 @@ return {
 
 
 	saw = function(freq)
-		local srate = 44100
 		local v, dv = 0
 		local fn = function(f)
 			if f then dv = f/srate end

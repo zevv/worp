@@ -145,7 +145,7 @@ static int l_new(lua_State *L)
 	}
 	
 	jack_set_process_callback(jack->client, process2, jack);
-	//jack_activate (jack->client);
+	jack_activate (jack->client);
 	
 	lua_pushnumber(L, jack_get_sample_rate(jack->client));
 	lua_pushnumber(L, jack_get_buffer_size(jack->client));
@@ -168,6 +168,8 @@ static int l_add_group(lua_State *L)
 	struct group *group = lua_newuserdata(L, sizeof *group);
         lua_getfield(L, LUA_REGISTRYINDEX, "jack_group");
 	lua_setmetatable(L, -2);
+	memset(group, 0, sizeof *group);
+
 	group->name = strdup(name);
 	group->id = jack->group_seq ++;
 	group->fd = fd[1];
@@ -188,8 +190,6 @@ static int l_add_group(lua_State *L)
 
 	group->next = jack->group_list;
 	jack->group_list = group;
-	
-	jack_activate (jack->client);
 
 	lua_pushnumber(L, fd[0]);
 	return 2;

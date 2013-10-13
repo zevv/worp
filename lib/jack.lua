@@ -23,16 +23,17 @@ local function jack_dsp(jack, name, n_in, n_out, fn)
 		local dt = 1/jack.srate
 		local gu, fd = jack_c.add_group(jack.j, name, n_in, n_out)
 
-		local function fn_do_block()
-			for i = 1, jack.bsize do
-				jack_c.write(gu, group.fn(t, jack_c.read(gu)))
-				t = t + dt
-			end
-		end
+		-- This function gets called when the jack thread needs more data. The
+		-- many calls into C should probably be optimized at some time
 
 		watch_fd(fd, function()
 			p.read(fd, 1)
-			local ok = safecall(fn_do_block)
+			local ok = safecall(function()
+				for i = 1, jack.bsize do
+					jack_c.write(gu, group.fn(t, jack_c.read(gu)))
+					t = t + dt
+				end
+			end)
 			if not ok then
 				print("Restoring last known good function")
 				group.fn = group.fn_ok

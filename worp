@@ -13,19 +13,27 @@ local fds = {}
 
 t_now = 0
 
+
+--
+-- Fix up line numbers of loaded chunks in stack traces and error messages
+--
+
+local function fixup_error(msg)
+	return msg:gsub('%[string "live (.-):(%d+)"]:(%d+)', function(n, l1, l2)
+		return n .. ":" .. (l1+l2-1)
+	end)
+end
+
+
 -- 
--- Safe call: calls the given function with an error handler. Error traces
--- are rewritten to fixup the line numbers in de loaded chunk for chunks
--- that were loaded with the 'load_code()' function below.
+-- Safe call: calls the given function with an error handler, print error
+-- and stacktrace to stdout
 --
 
 function safecall(fn, ...)
 	local function errhandler(err)
 		local msg = debug.traceback("Error: " .. err, 3)
-		msg = msg:gsub('%[string "live (.-):(%d+)"]:(%d+)', function(n, l1, l2)
-			return n .. ":" .. (l1+l2-1)
-		end)
-		print(msg)
+		print(fixup_error(msg))
 	end
 	if type(fn) == "string" then fn = env[fn] end
 	return xpcall(fn, errhandler, ...)
@@ -42,7 +50,7 @@ local function load_code(code, name)
 		t_now = time()
 		return safecall(fn)
 	else
-		return false, err
+		print("Error: " .. fixup_error(err))
 	end
 end
 

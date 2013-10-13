@@ -1,47 +1,90 @@
 
 -- 
--- A simple synth with reverb and CC controllable filter
+-- A simple polyphonic synth, using DSP code to generate nodes on midi input
 --
 
 Jack = require "jack"
 Dsp = require "dsp"
-Fs = require "fluidsynth"
 
 jack = Jack.new("worp")
-synth = Fs.new("synth")
+osc = Dsp.osc()
+adsr = Dsp.adsr(0.1, 0.2, 0.6, 0.3)
+rev = Dsp.reverb(0.5, 0.5)
+vel = 1
 
-local rev = Dsp.reverb(0.8, 0.7, 0.9, 0.2)
-local f = Dsp.filter("lp", 500)
 
-jack:dsp("rev", 2, 2, function(t, in1, in2)
-	local v = f(in1)
-	return rev(v, v)
-end)
+-- Voice generator, return a function to start, stop and generate sound.
 
+function voice()
+
+	local osc1 = Dsp.saw(100)
+	local osc2 = Dsp.saw(100)
+	local lfo = Dsp.osc(2)
+	local filt1 = Dsp.filter("lp", 100, 4)
+	local adsr = Dsp.adsr(0.1, 0.1, 0.6, 0.1)
+	local vel = 0
+
+	return function(cmd, f, v)
+		if cmd == "noteon" then
+			osc1(f * 0.505)
+			osc2(f * 1.000)
+			vel = v
+			adsr(true)
+			return
+		elseif cmd == "noteoff" then
+			adsr(false)
+			return
+		else
+			filt1("f0", lfo() * 100 + 500)
+			local a = adsr()
+			if a > 0 then
+				return filt1(osc1() + osc2()) * a
+			end
+		end
+	end
+end
+
+
+-- Handle midi note on and off messages. Generate new voices for new notes and
+-- start/stop ADSR's
+
+local vs = {}
 
 jack:midi("midi", function(channel, t, d1, d2)
 	if channel == 1 then
 		if t == "noteon" then 
-			synth:note(true, channel, d1, d2 / 127) 
+			local f = 440 * math.pow(2, (d1-57) / 12)
+			vel = d2 / 127
+			local v = voice()
+			v("noteon", f, vel)
+			vs[d1] = v
 		end
 		if t == "noteoff" then 
-			synth:note(false, channel, d1, d2 / 127) 
-		end
-		if t == "cc" and d1 == 1 then
-			f("f0", math.exp(d2 / 127 * 10))
+			vs[d1]("noteoff")
 		end
 	end
 end)
 
-synth:note(true, 9, 42, 1)
 
-jack:connect("worp:rev-out-1", "system:playback_1")
-jack:connect("worp:rev-out-2", "system:playback_2")
-jack:connect("worp:rev-out-2", "system:playback_2")
-jack:connect("synth:l_00", "worp:rev-in-1")
-jack:connect("synth:r_00", "worp:rev-in-2")
-jack:connect("system:midi_capture_3", "worp:midi-in")
+-- Add up the output of all running voices. Voices that are done playing are
+-- removed from the list
 
+jack:dsp("synth", 0, 1, function(t)
+	local o = 0
+	for note, v in pairs(vs) do
+		local p = v()
+		if p then
+			o = o + p * 0.1
+		else
+			vs[note] = nil
+		end
+	end
+	return rev(o)
+end)
+
+jack:connect("worp:synth-out-1", "system:playback_1")
+jack:connect("worp:synth-out-1", "system:playback_2")
+jack:connect("system:midi_capture_2", "worp:midi-in")
 
 -- vi: ft=lua ts=3 sw=3
 

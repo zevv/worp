@@ -21,11 +21,11 @@ local function jack_dsp(jack, name, n_in, n_out, fn)
 
 		local t = 0
 		local dt = 1/jack.srate
-		local fd, gid = jack_c.add_group(jack.j, name, n_in, n_out)
+		local gu, fd = jack_c.add_group(jack.j, name, n_in, n_out)
 
 		local function fn_do_block()
 			for i = 1, jack.bsize do
-				jack_c.write(jack.j, gid, group.fn(t, jack_c.read(jack.j, gid)))
+				jack_c.write(gu, group.fn(t, jack_c.read(gu)))
 				t = t + dt
 			end
 		end

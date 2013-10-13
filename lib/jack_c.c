@@ -133,9 +133,9 @@ static int l_new(lua_State *L)
 	jack_status_t status;
 	
 	struct jack *jack = lua_newuserdata(L, sizeof *jack);
-	memset(jack, 0, sizeof *jack);
         lua_getfield(L, LUA_REGISTRYINDEX, "jack_c");
 	lua_setmetatable(L, -2);
+	memset(jack, 0, sizeof *jack);
 	
 	jack->client = jack_client_open (client_name, options, &status, NULL);
 	if (jack->client == NULL) {
@@ -165,7 +165,9 @@ static int l_add_group(lua_State *L)
 	pipe(fd);
 
 	char pname[64];
-	struct group *group = calloc(sizeof *group, 1);
+	struct group *group = lua_newuserdata(L, sizeof *group);
+        lua_getfield(L, LUA_REGISTRYINDEX, "jack_group");
+	lua_setmetatable(L, -2);
 	group->name = strdup(name);
 	group->id = jack->group_seq ++;
 	group->fd = fd[1];
@@ -190,7 +192,6 @@ static int l_add_group(lua_State *L)
 	jack_activate (jack->client);
 
 	lua_pushnumber(L, fd[0]);
-	lua_pushnumber(L, group->id);
 	return 2;
 }
 
@@ -221,28 +222,20 @@ static int l_add_midi(lua_State *L)
 
 static int l_write(lua_State *L)
 {
-	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
-	int gid = luaL_checknumber(L, 2);
+	struct group *group = luaL_checkudata(L, 1, "jack_group");
 	int n = 3;
 
-	struct group *group = jack->group_list;
-	while(group) {
-		if(group->id == gid) {
-			struct port *port = group->port_list;
+	struct port *port = group->port_list;
 
-			while(port) {
-				if(port->flags == JackPortIsOutput) {
-					sample_t s = lua_tonumber(L, n++);
-					if(jack_ringbuffer_write_space(port->rb) >= sizeof s) {
-						jack_ringbuffer_write(port->rb, (void *)&s, sizeof s);
-					}
-				}
-				port = port->next;
+	while(port) {
+		if(port->flags == JackPortIsOutput) {
+			sample_t s = lua_tonumber(L, n++);
+			if(jack_ringbuffer_write_space(port->rb) >= sizeof s) {
+				jack_ringbuffer_write(port->rb, (void *)&s, sizeof s);
 			}
 		}
-		group = group->next;
+		port = port->next;
 	}
-
 
 	return 0;
 }
@@ -251,28 +244,21 @@ static int l_write(lua_State *L)
 static int l_read(lua_State *L)
 {
 	int n = 0;
-	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
-	int gid = luaL_checknumber(L, 2);
+	struct group *group = luaL_checkudata(L, 1, "jack_group");
 
-	struct group *group = jack->group_list;
-	while(group) {
-		if(group->id == gid) {
-			struct port *port = group->port_list;
+	struct port *port = group->port_list;
 
-			while(port) {
-				if(port->flags == JackPortIsInput) {
-					sample_t s = 0;
-					if(jack_ringbuffer_read_space(port->rb) >= sizeof s) {
-						jack_ringbuffer_read(port->rb, (void *)&s, sizeof s);
+	while(port) {
+		if(port->flags == JackPortIsInput) {
+			sample_t s = 0;
+			if(jack_ringbuffer_read_space(port->rb) >= sizeof s) {
+				jack_ringbuffer_read(port->rb, (void *)&s, sizeof s);
 
-					}
-					lua_pushnumber(L, s);
-					n++;
-				}
-				port = port->next;
 			}
+			lua_pushnumber(L, s);
+			n++;
 		}
-		group = group->next;
+		port = port->next;
 	}
 
 	return n;
@@ -321,9 +307,9 @@ static struct luaL_Reg jack_table[] = {
 int luaopen_jack_c(lua_State *L)
 {
 	luaL_newmetatable(L, "jack_c");
+	luaL_newmetatable(L, "jack_group");
         luaL_register(L, "jack_c", jack_table);
-
-        return 0;
+        return 1;
 }
 
 /*

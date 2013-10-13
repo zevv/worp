@@ -44,11 +44,12 @@ function worp(what)
 	vim.command("sign unplace *")
 
 	if from > 0 then
-		local code = { "-- " .. from .. " " .. to .. " " .. b.name}
+		local code = {}
 		for i = from, to do
 			vim.command("sign place " .. i .. " line=" .. i .. " name=sent file=" .. b.fname)
 			code[#code+1] = b[i]
 		end
+		code[#code+1] = "-- live " .. from .. " " .. to .. " " .. b.name
 		send(table.concat(code, "\n"))
 	else
 		vim.command("sign place 1 line=1 name=sent file=" .. b.fname)

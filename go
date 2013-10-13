@@ -14,31 +14,31 @@ local fds = {}
 t_now = 0
 
 -- 
--- Internal functions
+-- Safe call: calls the given function with an error handler. Error traces
+-- are rewritten to fixup the line numbers in de loaded chunk for chunks
+-- that were loaded with the 'load_code()' function below.
 --
 
 function safecall(fn, ...)
 	local function errhandler(err)
-		local errmsg = debug.traceback("Error: " .. err, 3)
-		print(errmsg)
-		return errmsg
+		local msg = debug.traceback("Error: " .. err, 3)
+		msg = msg:gsub('%[string "live (.-):(%d+)"]:(%d+)', function(n, l1, l2)
+			return n .. ":" .. (l1+l2-1)
+		end)
+		print(msg)
 	end
+	if type(fn) == "string" then fn = env[fn] end
 	return xpcall(fn, errhandler, ...)
 end
 
 
-function time()
-	local s, ns = p.clock_gettime(p.CLOCK_MONOTONIC)
-	local t = s + ns / 1e9
-	t_start = t_start or t
-	return t - t_start
-end
+--
+-- Load and run the given lua source 
+--
 
-
-local function load_code(code)
-	local fn, err = loadstring(code, "chunk")
+local function load_code(code, name)
+	local fn, err = load(code, name, "t", env)
 	if fn then
-		setfenv(fn, env)
 		t_now = time()
 		return safecall(fn)
 	else
@@ -48,8 +48,20 @@ end
 
 
 --
--- Schedule function 'fn' to be called at time 't'. 'fn' can be as string,
--- which will be resolved at calling time
+-- Return monotonic time, starts at zero at first invocation
+--
+
+function time()
+	local s, ns = p.clock_gettime(p.CLOCK_MONOTONIC)
+	local t = s + ns / 1e9
+	t_start = t_start or t
+	return t - t_start
+end
+
+
+--
+-- Schedule function 'fn' to be called in 't' seconds. 'fn' can be as string,
+-- which will be resolved in the 'env' table at calling time
 --
 
 function at(t, fn, ...)
@@ -66,7 +78,7 @@ end
 
 
 --
--- Clear all events from the event queue and mute synth
+-- Clear all events from the event queue 
 --
 
 function stop()
@@ -75,7 +87,7 @@ end
 
 
 --
--- Play a note using the given sound generator
+-- Play a note for the given duration using the given sound generator
 --
 
 function play(fn, note, vol, dur)
@@ -86,40 +98,52 @@ function play(fn, note, vol, dur)
 end
 
 
+--
+-- Register the given file descriptor to the main poll() loop. 'fn' is called
+-- when new data is available on the fd
+--
+
 function watch_fd(fd, fn)
 	fds[fd] = { events = { IN = true }, fn = fn }
 end
 
 
 -- 
--- Main event loop
+-- Open an UDP socket to receive Lua code chunks, and register to the 
+-- mail loop.
 --
 
-math.randomseed(os.time())
-
-
 local s = p.socket(p.AF_INET, p.SOCK_DGRAM, 0)
-p.bind(s, { family = p.AF_INET, port = 9889, addr = "0.0.0.0" })
+p.bind(s, { family = p.AF_INET, port = 9889, addr = "127.0.0.1" })
 
 watch_fd(s, function()
 	local code = p.recv(s, 65535)
-	local ok, err = load_code(code)
-	print(ok, err)
+	local from, to, name = 1, 1, "?"
+	local f, t, n = code:match("\n%-%- live (%d+) (%d+) ([^\n]+)")
+	if f then from, to, name = f, t, n end
+	local ok, err = load_code(code, "live " .. name .. ":" .. from)
 end)
-
-local t = 0
 
 p.signal(p.SIGINT, os.exit)
 
-print("Ready")
+--
+-- Run any files passed as arguments
+--
 
-
-if arg[1] then
-	load_code(io.open(arg[1]):read("*a"))
+for _, fname in ipairs(arg) do
+	load_code(io.open(fname):read("*a"), fname .. ":1")
 end
 
+math.randomseed(os.time())
 local t_start = time()
 t_now = 0
+
+
+--
+-- Main loop: wait for timers or events and schedule callback functions
+--
+
+print "Ready"
 
 while true do
 
@@ -133,10 +157,10 @@ while true do
 	if dt > 0 then
 		local r, a = p.poll(fds, dt * 1000)
 		if r and r > 0 then
-
 			for fd in pairs(fds) do
 				if fds[fd].revents and fds[fd].revents.IN then
-					fds[fd].fn()
+					t_now = time()
+					safecall(fds[fd].fn)
 				end
 			end
 		end

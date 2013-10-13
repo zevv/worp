@@ -223,7 +223,7 @@ static int l_add_midi(lua_State *L)
 static int l_write(lua_State *L)
 {
 	struct group *group = luaL_checkudata(L, 1, "jack_group");
-	int n = 3;
+	int n = 2;
 
 	struct port *port = group->port_list;
 
@@ -243,8 +243,8 @@ static int l_write(lua_State *L)
 
 static int l_read(lua_State *L)
 {
-	int n = 0;
 	struct group *group = luaL_checkudata(L, 1, "jack_group");
+	int n = 0;
 
 	struct port *port = group->port_list;
 

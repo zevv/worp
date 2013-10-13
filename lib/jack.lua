@@ -30,14 +30,9 @@ local function jack_dsp(jack, name, n_in, n_out, fn)
 			end
 		end
 
-		local function fn_err(err)
-			local errmsg = debug.traceback("Error: " .. err, 3)
-			print(errmsg)
-		end
-
 		watch_fd(fd, function()
 			p.read(fd, 1)
-			local ok = xpcall(fn_do_block, fn_err)
+			local ok = safecall(fn_do_block)
 			if not ok then
 				print("Restoring last known good function")
 				group.fn = group.fn_ok

@@ -121,7 +121,7 @@ watch_fd(s, function()
 	local from, to, name = 1, 1, "?"
 	local f, t, n = code:match("\n%-%- live (%d+) (%d+) ([^\n]+)")
 	if f then from, to, name = f, t, n end
-	local ok, err = load_code(code, "live " .. name .. ":" .. from)
+	load_code(code, "live " .. name .. ":" .. from)
 end)
 
 p.signal(p.SIGINT, os.exit)
@@ -155,12 +155,16 @@ while true do
 	end
 
 	if dt > 0 then
-		local r, a = p.poll(fds, dt * 1000)
+
+		local fds2 = {}
+		for k, v in pairs(fds) do fds2[k] = v end
+
+		local r, a = p.poll(fds2, dt * 1000)
 		if r and r > 0 then
-			for fd in pairs(fds) do
-				if fds[fd].revents and fds[fd].revents.IN then
+			for fd in pairs(fds2) do
+				if fds2[fd].revents and fds[fd].revents.IN then
 					t_now = time()
-					safecall(fds[fd].fn)
+					safecall(fds2[fd].fn)
 				end
 			end
 		end

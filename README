@@ -14,13 +14,57 @@ Some highlights:
 - Bindings for Fluidsynth and midi support
 
 
-Dependencies:
+Building 
+========
 
-- luajit 2.0.0
-- luaposix
+Worp depends on the following packages:
+
+- luajit (>= 2.0.0)
+- luaposix (>= v29)
 - Jack audio connection kit
 - Fluidsynth
 
+For live programming you need vim with built in lua support.
+
+Worp currently has no proper build system, just some static makefiles. Build
+by running 'make', and run from the current directory:
+
+  $ make
+  $ ./worp [script]
+
+The prjs/ directory contains some example scripts, which can be passed on the
+commandline to run at startup:
+
+  $ ./worp prjs/scales.lua
+
+
+Live programming
+================
+
+Worp has been designed to allow live editing of the code without interrupting
+sound playback. New chunks of Lua code can be sent to worp trough a local
+network socket, and are compiled and executed on the fly. A proof-of-concept
+vim plugin is available which can send parts of the current file to a running
+worp process.
+
+Load the plugin with the vim command
+
+  :luafile ~/sandbox/prjs/worp/vimplugin.lua<CR>
+
+The plugin currently remaps the following vim key sequences:
+
+  ,a     send the whole file to worp
+  ,f     send the current function
+  ,p     send the current paragraph
+  ,<CR>  send the current line
+
+Be careful with locals when using live coding: any functions or variables
+defined local during chunk loading will not be available when loading the next
+chunk. All code is loaded into the same environment, so use 'globals' instead.
+
+
+Misc
+====
 
 During the development of worp I learned of the existence of Impromptu
 (http://impromptu.moso.com.au/), which shares some of the basic design

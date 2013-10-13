@@ -40,7 +40,7 @@ jack:connect("worp:rev-out-2", "system:playback_2")
 jack:connect("worp:rev-out-2", "system:playback_2")
 jack:connect("synth:l_00", "worp:rev-in-1")
 jack:connect("synth:r_00", "worp:rev-in-2")
-jack:connect("system:midi_capture_2", "worp:midi-in")
+jack:connect("system:midi_capture_3", "worp:midi-in")
 
 
 -- vi: ft=lua ts=3 sw=3

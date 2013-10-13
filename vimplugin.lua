@@ -44,7 +44,7 @@ function worp(what)
 	vim.command("sign unplace *")
 
 	if from > 0 then
-		local code = {}
+		local code = { "-- " .. from .. " " .. to .. " " .. b.name}
 		for i = from, to do
 			vim.command("sign place " .. i .. " line=" .. i .. " name=sent file=" .. b.fname)
 			code[#code+1] = b[i]

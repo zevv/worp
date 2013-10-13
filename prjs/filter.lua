@@ -9,7 +9,8 @@ Dsp = require "dsp"
 jack = Jack.new("worp")
 
 
-local f = Dsp.filter("bp", 1000, 5)
+f = Dsp.filter("bp", 1000, 5)
+r = Dsp.reverb()
 
 jack:midi("midi", function(channel, t, d1, d2)
 	if t == "cc" then
@@ -21,10 +22,9 @@ jack:midi("midi", function(channel, t, d1, d2)
 	end
 end)
 
-local r = Dsp.reverb()
 
 jack:dsp("fx", 0, 1, function(t)
-	return f(math.random()) * 0.2
+	return f(math.random()) * 0.1
 end)
 
 

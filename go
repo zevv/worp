@@ -18,22 +18,12 @@ t_now = 0
 --
 
 function safecall(fn, ...)
-	if type(fn) == "string" then
-		fn = rawget(env, fn) or rawget(_G, fn)
-	end
-	if not fn then
-		return print("Function " .. fn .. " not defined")
-	end
-	local arg = {...}
-	local function wrapper()
-		return fn(unpack(arg))
-	end   
 	local function errhandler(err)
 		local errmsg = debug.traceback("Error: " .. err, 3)
 		print(errmsg)
 		return errmsg
 	end
-	return xpcall(wrapper, errhandler)
+	return xpcall(fn, errhandler, ...)
 end
 
 
@@ -50,11 +40,9 @@ local function load_code(code)
 	if fn then
 		setfenv(fn, env)
 		t_now = time()
-		local ok, err = safecall(fn)
-		--print("ok", ok)
+		return safecall(fn)
 	else
-		print(err)
-		print("")
+		return false, err
 	end
 end
 
@@ -115,7 +103,8 @@ p.bind(s, { family = p.AF_INET, port = 9889, addr = "0.0.0.0" })
 
 watch_fd(s, function()
 	local code = p.recv(s, 65535)
-	load_code(code)
+	local ok, err = load_code(code)
+	print(ok, err)
 end)
 
 local t = 0

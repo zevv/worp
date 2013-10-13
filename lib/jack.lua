@@ -1,27 +1,53 @@
 
 local jack_c = require "jack_c"
 
-
 --
 -- Register jack audio ports, n_in input ports and n_out output ports.
 -- Processing is done in given fn, all input data is given as arguments, all
--- returned data is passed as output data
+-- returned data is passed as output data.
 --
 
 local function jack_dsp(jack, name, n_in, n_out, fn)
 
-	local fd, gid = jack_c.add_group(jack.j, name, n_in, n_out)
-	
-	local t = 0
-	local dt = 1/jack.srate
+	local group = jack.group_list[name]
 
-	watch_fd(fd, function()
-		p.read(fd, 1)
-		for i = 1, jack.bsize do
-			jack_c.write(jack.j, gid, fn(t, jack_c.read(jack.j, gid)))
-			t = t + dt
+	if not group then
+
+		group = {
+			fn = fn,
+			fn_ok = function() end
+		}
+		jack.group_list[name] = group
+
+		local t = 0
+		local dt = 1/jack.srate
+		local fd, gid = jack_c.add_group(jack.j, name, n_in, n_out)
+
+		local function fn_do_block()
+			for i = 1, jack.bsize do
+				jack_c.write(jack.j, gid, group.fn(t, jack_c.read(jack.j, gid)))
+				t = t + dt
+			end
 		end
-	end)
+
+		local function fn_err(err)
+			local errmsg = debug.traceback("Error: " .. err, 3)
+			print(errmsg)
+		end
+
+		watch_fd(fd, function()
+			p.read(fd, 1)
+			local ok = xpcall(fn_do_block, fn_err)
+			if not ok then
+				print("Restoring last known good function")
+				group.fn = group.fn_ok
+			end
+		end)
+
+	else
+		group.fn_ok = group.fn
+		group.fn = fn
+	end
 
 end
 
@@ -80,6 +106,7 @@ local function new(name, port_list, fn)
 		j = j,
 		srate = srate,
 		bsize = bsize,
+		group_list = {},
 
 	}
 

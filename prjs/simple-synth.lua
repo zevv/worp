@@ -19,10 +19,10 @@ function voice()
 
 	local osc1 = Dsp.saw(100)
 	local osc2 = Dsp.saw(100)
-	local lfo = Dsp.osc(2)
+	local lfo = Dsp.osc(8)
 	local filt1 = Dsp.filter("lp", 100, 2)
 	local adsr = Dsp.adsr(0.1, 0.1, 0.6, 0.1)
-	local adsr2 = Dsp.adsr(0.9, 0.1, 0.6, 0.1)
+	local adsr2 = Dsp.adsr(1.9, 0.1, 0.6, 0.1)
 	local vel = 0
 
 	return function(cmd, f, v)
@@ -39,9 +39,9 @@ function voice()
 			return
 		else
 			local a = adsr()
-			filt1("f0", (adsr2() + lfo() * 0.1) * 1000 + 100)
+			filt1("f0", (adsr2() + lfo() * 0.05) * 1000 + 100)
 			if a > 0 then
-				return filt1(osc1() + osc2()) * a
+				return filt1(osc1() + osc2()) * a * vel
 			end
 		end
 	end

@@ -21,7 +21,7 @@ violin = function(onoff, key, vel) synth:note(onoff, 2, key, vel) end
 bass = function(onoff, key, vel) synth:note(onoff, 3, key, vel) end
 
 f = Dsp.filter("lp", 1000, 1, -3)
-r = Dsp.reverb(0.7, 0.5, 1, 0.1)
+r = Dsp.reverb(0.0, 1.0, 1, 0.1)
 
 jack:dsp("fx", 2, 2, function(t, i1, i2)
 	return r(f(i1, i2))
@@ -69,8 +69,8 @@ function doe(c)
 	local d = m:beat() * 2
 	local ms = Chord:new(0, "minor", c)
 	play(bass, 36+ms[1], 0.7, d)
-	local ns = mkchord(40, 73, 2, ms)
-	local vel = rl { 0.8, 0.9 }
+	local ns = mkchord(40, 93, 7, ms)
+	local vel = rl { 0.5, 0.6 }
 	for i = 1, #ns do
 		local n = ns[i]
 		play(violin, n, vel, d)

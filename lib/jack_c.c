@@ -286,6 +286,39 @@ static int l_connect(lua_State *L)
 }
 
 
+static int l_autoconnect(lua_State *L)
+{
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	const char *n1 = luaL_checkstring(L, 2);
+	jack_port_t *p1 = jack_port_by_name(jack->client, n1);
+	int i;
+
+	if(p1) {
+		int f1 = jack_port_flags(p1);
+		const char *t1 = jack_port_type(p1);
+		int f2 = (f1 & JackPortIsInput) ? JackPortIsOutput : JackPortIsInput;
+
+		const char **ns = jack_get_ports(jack->client, NULL, t1, f2);
+		if(ns) {
+			for(i=0; ns[i]; i++) {
+				printf("%d %s\n", i, ns[i]);
+				const char *n2 = ns[i];
+
+				if(f1 & JackPortIsInput) {
+					jack_connect(jack->client, n2, n1);
+				} else {
+					jack_connect(jack->client, n1, n2);
+				}
+				printf("%s -> %s\n", n1, n2);
+			}
+			free(ns);
+		}
+	}
+
+	return 0;
+}
+
+
 static int l_disconnect(lua_State *L)
 {
 	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
@@ -307,6 +340,7 @@ static struct luaL_Reg jack_table[] = {
 	{ "write",		l_write },
 	{ "read",		l_read },
 	{ "connect",		l_connect },
+	{ "autoconnect",	l_autoconnect },
 	{ "disconnect",		l_disconnect },
 
         { NULL },

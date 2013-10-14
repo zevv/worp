@@ -90,6 +90,9 @@ local function new(name, port_list, fn)
 
 		dsp = jack_dsp,
 		midi = jack_midi,
+		autoconnect = function(_, p1)
+			return jack_c.autoconnect(j, p1)
+		end,
 		connect = function(_, p1, p2)
 			return jack_c.connect(j, p1, p2)
 		end,

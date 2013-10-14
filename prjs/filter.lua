@@ -28,9 +28,9 @@ jack:dsp("fx", 0, 1, function(t)
 end)
 
 
-jack:connect("worp:fx-out-1", "system:playback_1")
-jack:connect("worp:fx-out-1", "system:playback_2")
-jack:connect("system:midi_capture_2", "worp:midi-in")
+jack:autoconnect("worp:fx-out-1")
+jack:autoconnect("worp:fx-out-1")
+jack:autoconnect("worp:midi-in")
 
 
 -- vi: ft=lua ts=3 sw=3

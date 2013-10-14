@@ -99,10 +99,10 @@ jack:midi("midi", function(channel, t, d1, d2)
 end)
 
 
-jack:connect("worp:looper-out-1", "system:playback_1")
-jack:connect("worp:looper-out-2", "system:playback_2")
-jack:connect("system:capture_1", "worp:looper-in-1")
-jack:connect("system:midi_capture_3", "worp:midi-in")
+jack:autoconnect("worp:looper-out-1")
+jack:autoconnect("worp:looper-out-2")
+jack:autoconnect("worp:looper-in-1")
+jack:autoconnect("worp:midi-in")
 
 -- vi: ft=lua ts=3 sw=3
 

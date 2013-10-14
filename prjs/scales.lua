@@ -37,11 +37,11 @@ jack:midi("midi", function(channel, t, d1, d2)
 	end
 end)
 
-jack:connect("worp:fx-out-1", "system:playback_1")
-jack:connect("worp:fx-out-2", "system:playback_2")
+jack:autoconnect("worp:fx-out-1")
+jack:autoconnect("worp:fx-out-2")
+jack:autoconnect("worp:midi-in")
 jack:connect("synth:l_00", "worp:fx-in-1")
 jack:connect("synth:r_00", "worp:fx-in-2")
-jack:connect("system:midi_capture_2", "worp:midi-in")
 
 synth:program_change(1, 4)
 synth:program_change(2, 68)

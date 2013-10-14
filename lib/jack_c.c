@@ -293,29 +293,47 @@ static int l_autoconnect(lua_State *L)
 	jack_port_t *p1 = jack_port_by_name(jack->client, n1);
 	int i;
 
-	if(p1) {
-		int f1 = jack_port_flags(p1);
-		int f2 = JackPortIsPhysical;
-		f2 |= (f1 & JackPortIsInput) ? JackPortIsOutput : JackPortIsInput;
-		
-		const char *t1 = jack_port_type(p1);
-
-		const char **ns = jack_get_ports(jack->client, NULL, t1, f2);
-		if(ns) {
-			for(i=0; ns[i]; i++) {
-				const char *n2 = ns[i];
-
-				if(f1 & JackPortIsInput) {
-					jack_connect(jack->client, n2, n1);
-				} else {
-					jack_connect(jack->client, n1, n2);
-				}
-			}
-			free(ns);
-		}
+	if(p1 == NULL) {
+		lua_pushnil(L);
+		lua_pushfstring(L, "Port %s not found", n1);
+		return 2;
 	}
 
-	return 0;
+	/* Find ports of same type but opposite direction */
+
+	const char *t1 = jack_port_type(p1);
+	int f1 = jack_port_flags(p1);
+	int f2 = JackPortIsPhysical | ((f1 & JackPortIsInput) ? JackPortIsOutput : JackPortIsInput);
+
+	const char **ns = jack_get_ports(jack->client, NULL, t1, f2);
+	if(!ns) {
+		lua_pushnil(L);
+		lua_pushstring(L, "No matching ports found");
+		return 2;
+	}
+
+	/* Iterate all ports and find one that is not yet connected to us. */
+
+	for(i=0; ns[i]; i++) {
+		const char *n2 = ns[i];
+		jack_port_t *p2 = jack_port_by_name(jack->client, n2);
+
+		const char **cs = jack_port_get_connections(p2);
+		if(!cs) {
+			free(cs);
+			if(f1 & JackPortIsInput) {
+				jack_connect(jack->client, n2, n1);
+			} else {
+				jack_connect(jack->client, n1, n2);
+			}
+			lua_pushstring(L, n2);
+			return 1;
+		}
+	}
+		
+	lua_pushnil(L);
+	lua_pushstring(L, "No matching ports found");
+	return 2;
 }
 
 

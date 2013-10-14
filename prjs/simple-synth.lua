@@ -85,12 +85,6 @@ jack:dsp("synth", 0, 2, function(t)
 	return rev(o)
 end)
 
-for f = 100, 5000, 100 do
-	v = voice()
-	v("noteon", f, 0.3)
-	vs[f] = v
-end
-
 jack:connect("worp:synth-out-1", "system:playback_1")
 jack:connect("worp:synth-out-2", "system:playback_2")
 jack:connect("system:midi_capture_2", "worp:midi-in")

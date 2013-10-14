@@ -20,7 +20,6 @@ Building
 Worp depends on the following packages:
 
 - luajit (>= 2.0.0)
-- luaposix (>= v29)
 - Jack audio connection kit
 - Fluidsynth
 

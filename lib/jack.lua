@@ -82,7 +82,7 @@ end
 
 local function new(name, port_list, fn)
 	
-	local j, srate, bsize = jack_c.new(name or "worp")
+	local j, srate, bsize = jack_c.open(name or "worp")
 
 	local jack = {
 

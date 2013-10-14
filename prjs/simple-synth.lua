@@ -21,8 +21,8 @@ function voice()
 	local osc2 = Dsp.saw(100)
 	local lfo = Dsp.osc(8)
 	local filt1 = Dsp.filter("lp", 100, 2)
-	local adsr = Dsp.adsr(0.1, 0.1, 0.6, 0.1)
-	local adsr2 = Dsp.adsr(1.9, 0.1, 0.6, 0.1)
+	local adsr = Dsp.adsr(0.1, 0.1, 0.6, 2)
+	local adsr2 = Dsp.adsr(1.9, 0.1, 0.6, 1)
 	local vel = 0
 
 	return function(cmd, f, v)
@@ -84,6 +84,12 @@ jack:dsp("synth", 0, 2, function(t)
 	end
 	return rev(o)
 end)
+
+for f = 100, 5000, 100 do
+	v = voice()
+	v("noteon", f, 0.3)
+	vs[f] = v
+end
 
 jack:connect("worp:synth-out-1", "system:playback_1")
 jack:connect("worp:synth-out-2", "system:playback_2")

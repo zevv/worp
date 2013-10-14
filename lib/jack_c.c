@@ -126,7 +126,7 @@ static int process2(jack_nframes_t nframes, void *arg)
 }
 
 
-static int l_new(lua_State *L)
+static int l_open(lua_State *L)
 {
 	const char *client_name = luaL_checkstring(L, 1);
 	jack_options_t options = JackNullOption;
@@ -152,6 +152,15 @@ static int l_new(lua_State *L)
         return 3;
 }
 	
+
+static int l_gc(lua_State *L)
+{
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	jack_client_close(jack->client);
+	return 0;
+}
+
+
 
 static int l_add_group(lua_State *L)
 {
@@ -291,7 +300,7 @@ static int l_disconnect(lua_State *L)
 
 static struct luaL_Reg jack_table[] = {
 
-        { "new",		l_new },
+        { "open",		l_open },
         { "add_group",		l_add_group },
         { "add_midi",		l_add_midi },
 
@@ -307,6 +316,10 @@ static struct luaL_Reg jack_table[] = {
 int luaopen_jack_c(lua_State *L)
 {
 	luaL_newmetatable(L, "jack_c");
+	lua_pushstring(L, "__gc");
+	lua_pushcfunction(L, l_gc);
+	lua_settable(L, -3);
+
 	luaL_newmetatable(L, "jack_group");
         luaL_register(L, "jack_c", jack_table);
         return 1;

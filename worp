@@ -153,7 +153,8 @@ t_now = 0
 
 print "Ready"
 
-while true do
+running = true
+while running do
 
 	local dt = 10
 	local ev = ev_queue[#ev_queue]

@@ -291,6 +291,7 @@ static int l_autoconnect(lua_State *L)
 	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
 	const char *n1 = luaL_checkstring(L, 2);
 	jack_port_t *p1 = jack_port_by_name(jack->client, n1);
+	int ok = 0;
 	int i;
 
 	if(p1 == NULL) {
@@ -312,7 +313,9 @@ static int l_autoconnect(lua_State *L)
 		return 2;
 	}
 
-	/* Iterate all ports and find one that is not yet connected to us. */
+	/* Iterate all ports and find one that is not yet connected to us.
+	 * Audio ports are only connected to one other audio ports, midi ports
+	 * are connected to all midi ports */
 
 	for(i=0; ns[i]; i++) {
 		const char *n2 = ns[i];
@@ -326,14 +329,22 @@ static int l_autoconnect(lua_State *L)
 			} else {
 				jack_connect(jack->client, n1, n2);
 			}
-			lua_pushstring(L, n2);
-			return 1;
+			ok ++;
+			if(strcmp(t1, JACK_DEFAULT_AUDIO_TYPE) == 0) {
+				lua_pushnil(L);
+				return 1;
+			}
 		}
 	}
-		
-	lua_pushnil(L);
-	lua_pushstring(L, "No matching ports found");
-	return 2;
+	
+	if(!ok) {
+		lua_pushnil(L);
+		lua_pushstring(L, "No matching ports found");
+		return 2;
+	} else {
+		lua_pushboolean(L, 1);
+		return 1;
+	}
 }
 
 

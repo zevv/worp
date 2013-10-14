@@ -80,6 +80,27 @@ local function jack_midi(jack, name, fn)
 end
 
 
+local function jack_autoconnect(jack, n1)
+	local ps = jack:list_ports()
+	local p1 = ps[n1]
+	if p1 then
+		for i, p2 in ipairs(ps) do
+			local n2 = p2.name
+			if p1.type == p2.type and ((p1.flags.input and p2.flags.output) or (p1.flags.output and p2.flags.input)) then
+				if p2.flags.physical and #p2.connections == 0 then
+					if p1.flags.input then 
+						jack_c.connect(jack.j, n2, n1)
+					else
+						jack_c.connect(jack.j, n1, n2)
+					end
+					if p1.type:find("audio") then return end
+				end
+			end
+		end
+	end
+end
+
+
 local function new(name, port_list, fn)
 	
 	local j, srate, bsize = jack_c.open(name or "worp")
@@ -90,14 +111,15 @@ local function new(name, port_list, fn)
 
 		dsp = jack_dsp,
 		midi = jack_midi,
-		autoconnect = function(_, p1)
-			return jack_c.autoconnect(j, p1)
-		end,
+		autoconnect = jack_autoconnect,
 		connect = function(_, p1, p2)
 			return jack_c.connect(j, p1, p2)
 		end,
 		disconnect = function(_, p1, p2)
 			return jack_c.disconnect(j, p1, p2)
+		end,
+		list_ports = function(_)
+			return jack_c.list_ports(j)
 		end,
 
 		-- data

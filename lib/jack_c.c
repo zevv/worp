@@ -286,68 +286,6 @@ static int l_connect(lua_State *L)
 }
 
 
-static int l_autoconnect(lua_State *L)
-{
-	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
-	const char *n1 = luaL_checkstring(L, 2);
-	jack_port_t *p1 = jack_port_by_name(jack->client, n1);
-	int ok = 0;
-	int i;
-
-	if(p1 == NULL) {
-		lua_pushnil(L);
-		lua_pushfstring(L, "Port %s not found", n1);
-		return 2;
-	}
-
-	/* Find ports of same type but opposite direction */
-
-	const char *t1 = jack_port_type(p1);
-	int f1 = jack_port_flags(p1);
-	int f2 = JackPortIsPhysical | ((f1 & JackPortIsInput) ? JackPortIsOutput : JackPortIsInput);
-
-	const char **ns = jack_get_ports(jack->client, NULL, t1, f2);
-	if(!ns) {
-		lua_pushnil(L);
-		lua_pushstring(L, "No matching ports found");
-		return 2;
-	}
-
-	/* Iterate all ports and find one that is not yet connected to us.
-	 * Audio ports are only connected to one other audio ports, midi ports
-	 * are connected to all midi ports */
-
-	for(i=0; ns[i]; i++) {
-		const char *n2 = ns[i];
-		jack_port_t *p2 = jack_port_by_name(jack->client, n2);
-
-		const char **cs = jack_port_get_connections(p2);
-		if(!cs) {
-			free(cs);
-			if(f1 & JackPortIsInput) {
-				jack_connect(jack->client, n2, n1);
-			} else {
-				jack_connect(jack->client, n1, n2);
-			}
-			ok ++;
-			if(strcmp(t1, JACK_DEFAULT_AUDIO_TYPE) == 0) {
-				lua_pushnil(L);
-				return 1;
-			}
-		}
-	}
-	
-	if(!ok) {
-		lua_pushnil(L);
-		lua_pushstring(L, "No matching ports found");
-		return 2;
-	} else {
-		lua_pushboolean(L, 1);
-		return 1;
-	}
-}
-
-
 static int l_disconnect(lua_State *L)
 {
 	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
@@ -356,6 +294,51 @@ static int l_disconnect(lua_State *L)
 
 	int r = jack_disconnect(jack->client, p1, p2);
 	lua_pushnumber(L, r);
+	return 1;
+}
+
+
+static int l_list_ports(lua_State *L)
+{
+	struct jack *jack = luaL_checkudata(L, 1, "jack_c");
+	const char **ns = jack_get_ports(jack->client, NULL, NULL, 0);
+	if(!ns) return 0;
+	int i, j;
+
+	lua_newtable(L);
+	for(i=0; ns && ns[i]; i++) {
+		jack_port_t *p = jack_port_by_name(jack->client, ns[i]);
+		lua_pushnumber(L, i+1);
+		lua_newtable(L);
+
+		lua_pushstring(L, ns[i]); lua_setfield(L, -2, "name");
+		lua_pushstring(L, jack_port_type(p)); lua_setfield(L, -2, "type");
+
+		lua_newtable(L);
+		int flags = jack_port_flags(p);
+		if(flags & JackPortIsInput) { lua_pushboolean(L, 1); lua_setfield(L, -2, "input"); }
+		if(flags & JackPortIsOutput) { lua_pushboolean(L, 1); lua_setfield(L, -2, "output"); }
+		if(flags & JackPortIsPhysical) { lua_pushboolean(L, 1); lua_setfield(L, -2, "physical"); }
+		if(flags & JackPortIsTerminal) { lua_pushboolean(L, 1); lua_setfield(L, -2, "terminal"); }
+		lua_setfield(L, -2, "flags");
+
+		lua_newtable(L);
+		const char **cs = jack_port_get_connections(p);
+		for(j=0; cs && cs[j]; j++) {
+			lua_pushnumber(L, j+1);
+			lua_pushstring(L, cs[j]);
+			lua_settable(L, -3);
+		}
+		free(cs);
+		lua_setfield(L, -2, "connections");
+
+		lua_pushvalue(L, -1);
+		lua_insert(L, -4);
+		lua_settable(L, -3);
+
+		lua_pushvalue(L, -2);
+		lua_setfield(L, -2, ns[i]);
+	}
 	return 1;
 }
 
@@ -369,8 +352,8 @@ static struct luaL_Reg jack_table[] = {
 	{ "write",		l_write },
 	{ "read",		l_read },
 	{ "connect",		l_connect },
-	{ "autoconnect",	l_autoconnect },
 	{ "disconnect",		l_disconnect },
+	{ "list_ports",		l_list_ports },
 
         { NULL },
 };

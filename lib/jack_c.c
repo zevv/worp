@@ -295,13 +295,14 @@ static int l_autoconnect(lua_State *L)
 
 	if(p1) {
 		int f1 = jack_port_flags(p1);
+		int f2 = JackPortIsPhysical;
+		f2 |= (f1 & JackPortIsInput) ? JackPortIsOutput : JackPortIsInput;
+		
 		const char *t1 = jack_port_type(p1);
-		int f2 = (f1 & JackPortIsInput) ? JackPortIsOutput : JackPortIsInput;
 
 		const char **ns = jack_get_ports(jack->client, NULL, t1, f2);
 		if(ns) {
 			for(i=0; ns[i]; i++) {
-				printf("%d %s\n", i, ns[i]);
 				const char *n2 = ns[i];
 
 				if(f1 & JackPortIsInput) {
@@ -309,7 +310,6 @@ static int l_autoconnect(lua_State *L)
 				} else {
 					jack_connect(jack->client, n1, n2);
 				}
-				printf("%s -> %s\n", n1, n2);
 			}
 			free(ns);
 		}

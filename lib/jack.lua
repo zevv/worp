@@ -85,9 +85,9 @@ local function jack_autoconnect(jack, n1)
 	local p1 = ps[n1]
 	if p1 then
 		for i, p2 in ipairs(ps) do
-			local n2 = p2.name
 			if p1.type == p2.type and ((p1.flags.input and p2.flags.output) or (p1.flags.output and p2.flags.input)) then
 				if p2.flags.physical and #p2.connections == 0 then
+					local n2 = p2.name
 					if p1.flags.input then 
 						jack_c.connect(jack.j, n2, n1)
 					else

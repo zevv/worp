@@ -2,9 +2,13 @@
 
 package.path = package.path .. ";./lib/?.lua"
 package.cpath = package.cpath .. ";./lib/?.so"
-require "strict"
 
 p = require "posix"
+
+require "app.strict"
+require "app.log"
+require "app.misc"
+
 
 env = setmetatable({}, { __index = _G })
 local ev_queue = {}
@@ -116,6 +120,11 @@ function watch_fd(fd, fn)
 end
 
 
+
+local opt, arg = getopt(arg, 'l:')
+
+logf_init(opt.l or "")
+
 -- 
 -- Open an UDP socket to receive Lua code chunks, and register to the 
 -- mail loop.
@@ -151,7 +160,7 @@ t_now = 0
 -- Main loop: wait for timers or events and schedule callback functions
 --
 
-print "Ready"
+logf(LG_INF, "Ready")
 
 running = true
 while running do
@@ -173,7 +182,10 @@ while running do
 			for fd in pairs(fds2) do
 				if fds2[fd].revents and fds[fd].revents.IN then
 					t_now = time()
-					safecall(fds2[fd].fn)
+					local ok, rv = safecall(fds2[fd].fn)
+					if not ok or rv == false then
+						fds[fd] = nil
+					end
 				end
 			end
 		end

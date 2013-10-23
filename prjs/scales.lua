@@ -8,17 +8,21 @@ Chord = require "chord"
 Metro = require "metro"
 Jack = require "jack"
 Dsp = require "dsp"
+Ls = require "linuxsampler"
 
 synth = Fs.new("synth")
 jack = Jack.new("worp")
+
+linuxsampler = Ls.new("/opt/samples")
 
 function rl(vs)
 	return vs[math.random(1, #vs)]
 end
 
-piano = function(onoff, key, vel) synth:note(onoff, 1, key, vel) end
-violin = function(onoff, key, vel) synth:note(onoff, 2, key, vel) end
-bass = function(onoff, key, vel) synth:note(onoff, 3, key, vel) end
+piano = linuxsampler:add("piano", "maestro_concert_grand.gig", 0)
+violin = linuxsampler:add("violin", "concert_harp.gig", 1)
+bass = linuxsampler:add("bass", "basses.gig", 1)
+
 
 f = Dsp.filter("lp", 1000, 1, -3)
 r = Dsp.reverb(0.0, 1.0, 1, 0.1)
@@ -65,11 +69,10 @@ end
 m = Metro:new(60)
 
 function doe(c)
-	print(c)
 	local d = m:beat() * 2
 	local ms = Chord:new(0, "minor", c)
 	play(bass, 36+ms[1], 0.7, d)
-	local ns = mkchord(40, 93, 7, ms)
+	local ns = mkchord(40, 63, 7, ms)
 	local vel = rl { 0.5, 0.6 }
 	for i = 1, #ns do
 		local n = ns[i]

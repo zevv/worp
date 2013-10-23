@@ -3,7 +3,9 @@
 package.path = package.path .. ";./lib/?.lua"
 package.cpath = package.cpath .. ";./lib/?.so"
 
+--
 -- Application libraries
+--
 
 P = require "posix"
 
@@ -12,6 +14,8 @@ require "app.log"
 require "app.misc"
 require "app.evq"
 require "app.sandbox"
+require "app.co"
+require "app.getopt"
 
 
 -- 

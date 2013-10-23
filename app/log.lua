@@ -1,5 +1,5 @@
 --
--- Copyright © 2007 Ico Doornekamp. All Rights Reserved.
+-- Copyright © 2007 Ico DoornekamP. All Rights Reserved.
 --
 
 LG_FTL = 1
@@ -37,7 +37,7 @@ function logf_init(level)
 	else
 		logf_level_global = level
 	end
-	logf_use_color = p.isatty(0)
+	logf_use_color = P.isatty(0)
 end
 
 
@@ -83,7 +83,7 @@ function logc(level, class, msg, ...)
 		
 		logf_busy = true
 
-		-- Create timestamp. Intra-second timestamps show usec, otherwise
+		-- Create timestamP. Intra-second timestamps show usec, otherwise
 		-- normale date/time stamp
 
 		local t_now = os.time()

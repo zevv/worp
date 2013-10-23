@@ -27,7 +27,7 @@ local function jack_dsp(jack, name, n_in, n_out, fn)
 		-- many calls into C should probably be optimized at some time
 
 		watch_fd(fd, function()
-			p.read(fd, 1)
+			P.read(fd, 1)
 			local ok = safecall(function()
 				for i = 1, jack.bsize do
 					jack_c.write(gu, group.fn(t, jack_c.read(gu)))
@@ -66,7 +66,7 @@ local function jack_midi(jack, name, fn)
 	local fd = jack_c.add_midi(jack.j, name)
 
 	watch_fd(fd, function()
-		local msg = p.read(fd, 3)
+		local msg = P.read(fd, 3)
 
 		local b1, b2, b3 = string.byte(msg, 1, #msg)
 

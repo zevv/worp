@@ -8,7 +8,7 @@
 local function tx(ls, data)
 
 	logf(LG_DMP, "tx> %s", data)
-	p.send(ls.fd, data .. "\n")
+	P.send(ls.fd, data .. "\n")
 	
 	if coroutine.running() then
 		ls.rx_fn = resumer()
@@ -54,12 +54,12 @@ end
 
 local function new(path)
 
-	local fd, err = p.socket(p.AF_INET, p.SOCK_STREAM, 0)
+	local fd, err = P.socket(P.AF_INET, P.SOCK_STREAM, 0)
 	if not fd then
 		return logf(LG_WRN, "Error connecting to linuxsampler: %s", err)
 	end
 
-	local ok, err = p.connect(fd, { family = p.AF_INET, addr = "127.0.0.1", port = 8888 })
+	local ok, err = P.connect(fd, { family = P.AF_INET, addr = "127.0.0.1", port = 8888 })
 	if not ok then
 		return logf(LG_WRN, "Error connecting to linuxsampler: %s", err)
 	end
@@ -81,7 +81,7 @@ local function new(path)
 	}
 
 	watch_fd(fd, function()
-		local data = p.recv(fd, 1024)
+		local data = P.recv(fd, 1024)
 		if not data then
 			logf(LG_WRN, "Connection to linuxsampler lost")
 			return false

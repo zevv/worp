@@ -3,7 +3,6 @@
 -- Handle the sandbox for loading worp scripts.
 --
 
-
 local env = {}
 
 
@@ -22,23 +21,7 @@ function sandbox_load(code, name)
 end
 
 
--- 
--- Open an UDP socket to receive Lua code chunks, and register to the 
--- mail loop.
---
-
 function sandbox_init()
-
-	local s = P.socket(P.AF_INET, P.SOCK_DGRAM, 0)
-	P.bind(s, { family = P.AF_INET, port = 9889, addr = "127.0.0.1" })
-
-	watch_fd(s, function()
-		local code = P.recv(s, 65535)
-		local from, to, name = 1, 1, "?"
-		local f, t, n = code:match("\n%-%- live (%d+) (%d+) ([^\n]+)")
-		if f then from, to, name = f, t, n end
-		sandbox_load(code, "live " .. name .. ":" .. from)
-	end)
 
 	-- Initialize env with default lua and worp libraries
 
@@ -61,7 +44,23 @@ function sandbox_init()
 	env.Chord = require "chord"
 	env.Metro = require "metro"
 
-	setmetatable({}, { __index = _G })
+	-- setmetatable(env, { __index = function(_, s) print(s) return _G[s] end})
+	
+	-- 
+	-- Open an UDP socket to receive Lua code chunks, and register to the 
+	-- mail loop.
+	--
+
+	local s = P.socket(P.AF_INET, P.SOCK_DGRAM, 0)
+	P.bind(s, { family = P.AF_INET, port = 9889, addr = "127.0.0.1" })
+
+	watch_fd(s, function()
+		local code = P.recv(s, 65535)
+		local from, to, name = 1, 1, "?"
+		local f, t, n = code:match("\n%-%- live (%d+) (%d+) ([^\n]+)")
+		if f then from, to, name = f, t, n end
+		sandbox_load(code, "live " .. name .. ":" .. from)
+	end)
 
 end
 

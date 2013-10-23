@@ -6,7 +6,7 @@
 ls = Linuxsampler.new("/opt/samples")
 
 piano = ls:add("piano", "megapiano.gig")
-violin = ls:add("violin", "violins.gig", 0)
+violin = ls:add("violin", "megapiano.gig", 0)
 
 jack = Jack.new()
 

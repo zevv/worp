@@ -4,21 +4,18 @@
 -- implements a asynchronous interface to make sure not to block the main
 -- thread while waiting for linuxsampler to reply.
 --
+
+local function tx(ls, data)
+
+	logf(LG_DMP, "tx> %s", data)
+	p.send(ls.fd, data .. "\n")
 	
-local function do_tx(ls)
-	if not ls.rx_fn and #ls.tx_queue > 0 then
-		local msg = table.remove(ls.tx_queue, 1)
-		p.send(ls.fd, msg.data .. "\n")
-		logf(LG_DMP, "tx> %s", msg.data)
-		ls.rx_fn = msg.fn or function() end
+	if coroutine.running() then
+		ls.rx_fn = resumer()
+		return coroutine.yield()
+	else
+		ls.rx_fn = function() end
 	end
-end
-
-
-local function tx(ls, data, fn)
-	ls.rx_buf = ""
-	table.insert(ls.tx_queue, { data = data, fn = fn })
-	do_tx(ls)
 end
 
 
@@ -26,36 +23,29 @@ local function add(ls, name, fname, index)
 
 	fname = ls.path .. "/" .. fname
 
-	local channel
+	local driver = tx(ls, "CREATE AUDIO_OUTPUT_DEVICE JACK NAME=%q" % name)
 
-	tx(ls, "CREATE AUDIO_OUTPUT_DEVICE JACK NAME=%q" % name, function(ok, driver)
-		if ok then
-			tx(ls, "SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 NAME='out_1'" % driver)
-			tx(ls, "SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 NAME='out_2'" % driver)
-			tx(ls, "SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 JACK_BINDINGS='system:playback_1'" % driver)
-			tx(ls, "SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 JACK_BINDINGS='system:playback_2'" % driver)
-		end
-		tx(ls, "ADD CHANNEL", function(ok, ch)
-			tx(ls, "LOAD ENGINE gig %d" % { ch })
-			tx(ls, "SET CHANNEL AUDIO_OUTPUT_DEVICE %d 0" % { ch })
-			tx(ls, "LOAD INSTRUMENT %q %d %d" % { fname, index or 0, ch })
-			tx(ls, "GET CHANNEL INFO %d" % ch, function(ok, data)
-				local inst = data:match("INSTRUMENT_NAME: ([^\n\r]+)") or "-"
-				logf(LG_INF, "linuxsampler %q channel %d: %s", name, ch, inst)
-			end)
-			at(1, function()
-				channel = ch
-			end)
-		end)
-	end)
+	if driver then
+		ls:tx("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 NAME='out_1'" % driver)
+		ls:tx("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 NAME='out_2'" % driver)
+		ls:tx("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 JACK_BINDINGS='system:playback_1'" % driver)
+		ls:tx("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 JACK_BINDINGS='system:playback_2'" % driver)
+	end
+
+	local ch = tx(ls, "ADD CHANNEL")
+	ls:tx("LOAD ENGINE gig %d" % ch)
+	ls:tx("SET CHANNEL AUDIO_OUTPUT_DEVICE %d 0" % ch)
+	ls:tx("LOAD INSTRUMENT %q %d %d" % { fname, index or 0, ch })
+
+	local info = ls:tx("GET CHANNEL INFO %d" % ch)
+	local inst = info:match("INSTRUMENT_NAME: ([^\n\r]+)") or "-"
+	logf(LG_INF, "linuxsampler %q channel %d: %s", name, ch, inst)
 
 	return function(onoff, key, vel)
-		if channel then
-			if onoff then
-				tx(ls, "SEND CHANNEL MIDI_DATA NOTE_ON %d %d %d\n" % { channel, key, vel * 127 })
-			else
-				tx(ls, "SEND CHANNEL MIDI_DATA NOTE_OFF %d %d %d\n" % { channel, key, vel * 127 })
-			end
+		if onoff then
+			tx(ls, "SEND CHANNEL MIDI_DATA NOTE_ON %d %d %d\n" % { ch, key, vel * 127 })
+		else
+			tx(ls, "SEND CHANNEL MIDI_DATA NOTE_OFF %d %d %d\n" % { ch, key, vel * 127 })
 		end
 	end
 
@@ -86,7 +76,6 @@ local function new(path)
 		path = path or "",
 		fd = fd,
 		tx_queue = {},
-		rx_fn = nil,
 		rx_buf = "",
 
 	}
@@ -102,13 +91,9 @@ local function new(path)
 			local rv = l:match("^OK%[?(%d*)%]?") or l:match("^%.")
 			local err = l:match("ERR:(.+)") or l:match("WRN:(.+)")
 			if rv then
-				if ls.rx_fn then ls.rx_fn(true, rv and tonumber(rv) or ls.rx_buf) end
-				ls.rx_fn = nil
-				do_tx(ls)
+				ls.rx_fn(rv and tonumber(rv) or ls.rx_buf)
 			elseif err then
-				if ls.rx_fn then ls.rx_fn(false, err) end
-				ls.rx_fn = nil
-				do_tx(ls)
+				ls.rx_fn(nil, err)
 			else
 				ls.rx_buf = ls.rx_buf .. l .. "\n"
 			end

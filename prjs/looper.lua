@@ -3,9 +3,6 @@
 -- Simple 4 track looper controlled by Akai MKP mini
 --
 
-Mixer = require "mixer"
-Jack = require "jack"
-
 jack = Jack.new("worp")
 
 local function pan(v, p)

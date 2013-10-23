@@ -3,15 +3,12 @@
 -- Some generated music with effects
 --
 
-Chord = require "chord"
-Metro = require "metro"
-Jack = require "jack"
-jack = Jack.new("worp")
-Ls = require "linuxsampler"
+ls = Linuxsampler.new("/opt/samples")
 
+piano = ls:add("piano", "megapiano.gig")
+violin = ls:add("violin", "violins.gig", 0)
 
-piano = Ls.new("piano", "/opt/samples/maestro_concert_grand_v2.gig")
-violin = Ls.new("violin", "/opt/samples/megapiano.gig")
+jack = Jack.new()
 
 jack:autoconnect("synth:l_00")
 jack:autoconnect("synth:r_00")

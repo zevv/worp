@@ -3,10 +3,6 @@
 -- Pitch shifter. Inspired by http://dafx.labri.fr/main/papers/p007.pdf
 --
 
-Jack = require "jack"
-Dsp = require "dsp"
-
-
 function pitchshift(factor)
 
 	local pr, prn, pw = 0, 0, 0

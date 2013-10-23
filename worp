@@ -1,22 +1,32 @@
 #!/usr/bin/luajit
 
-package.path = package.path .. ";./lib/?.lua"
-package.cpath = package.cpath .. ";./lib/?.so"
+-- Application code
 
 p = require "posix"
-
 require "app.strict"
 require "app.log"
 require "app.misc"
+
+-- Load default libraries
+
+package.path = package.path .. ";./lib/?.lua"
+package.cpath = package.cpath .. ";./lib/?.so"
+
+Chord = require "chord"
+Linuxsampler = require "linuxsampler"
+Fluidsynth = require "fluidsynth"
+Jack = require "jack"
+Dsp = require "dsp"
+Chord = require "chord"
+Metro = require "metro"
+
 
 
 env = setmetatable({}, { __index = _G })
 local ev_queue = {}
 local t_start = nil
 local fds = {}
-
 t_now = 0
-
 
 --
 -- Fix up line numbers of loaded chunks in stack traces and error messages
@@ -52,7 +62,8 @@ local function load_code(code, name)
 	local fn, err = load(code, name, "t", env)
 	if fn then
 		t_now = time()
-		return safecall(fn)
+		local co = coroutine.create(fn)
+		safecall(resumer(co))
 	else
 		print("Error: " .. fixup_error(err))
 	end

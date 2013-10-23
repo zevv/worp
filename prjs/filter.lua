@@ -3,11 +3,7 @@
 -- Filter test. White noise generator is passed through a CC controlled filter.
 --
 
-Jack = require "jack"
-Dsp = require "dsp"
-
 jack = Jack.new("worp")
-
 
 f = Dsp.filter("bp", 1000, 5)
 r = Dsp.reverb()

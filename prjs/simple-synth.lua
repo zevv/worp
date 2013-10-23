@@ -3,9 +3,6 @@
 -- A simple polyphonic synth, using DSP code to generate nodes on midi input
 --
 
-Jack = require "jack"
-Dsp = require "dsp"
-
 jack = Jack.new("worp")
 osc = Dsp.osc()
 adsr = Dsp.adsr(0.1, 0.2, 0.6, 0.3)

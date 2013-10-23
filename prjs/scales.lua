@@ -3,21 +3,15 @@
 -- Some generated music with effects
 --
 
-Fs = require "fluidsynth"
-Chord = require "chord"
-Metro = require "metro"
-Jack = require "jack"
-Dsp = require "dsp"
-Ls = require "linuxsampler"
-
-synth = Fs.new("synth")
+synth = Fluidsynth.new("synth")
 jack = Jack.new("worp")
 
-linuxsampler = Ls.new("/opt/samples")
 
 function rl(vs)
 	return vs[math.random(1, #vs)]
 end
+
+linuxsampler = Linuxsampler.new("/opt/samples")
 
 piano = linuxsampler:add("piano", "maestro_concert_grand.gig", 0)
 violin = linuxsampler:add("violin", "concert_harp.gig", 1)

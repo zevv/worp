@@ -3,11 +3,8 @@
 -- A simple midi piano
 --
 
-Jack = require "jack"
-Fs = require "fluidsynth"
-
 jack = Jack.new("worp")
-synth = Fs.new("synth")
+synth = Fluidsynth.new("synth")
 
 jack:midi("midi", function(channel, t, d1, d2)
 	if channel == 1 then

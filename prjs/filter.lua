@@ -23,10 +23,7 @@ jack:dsp("fx", 0, 1, function(t)
 	return f(math.random()) * 0.1
 end)
 
-
-jack:autoconnect("worp:fx-out-1")
-jack:autoconnect("worp:fx-out-1")
-jack:autoconnect("worp:midi-in")
+jack:connect("worp")
 
 
 -- vi: ft=lua ts=3 sw=3

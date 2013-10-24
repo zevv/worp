@@ -76,9 +76,7 @@ jack:dsp("fx", 0, 2, function(t)
 end)
 
 
-jack:autoconnect("worp:fx-out-1")
-jack:autoconnect("worp:fx-out-2")
-jack:autoconnect("worp:midi-in")
+jack:connect("worp")
 
 
 -- vi: ft=lua ts=3 sw=3

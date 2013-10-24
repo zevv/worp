@@ -95,11 +95,7 @@ jack:midi("midi", function(channel, t, d1, d2)
 	end
 end)
 
-
-jack:autoconnect("worp:looper-out-1")
-jack:autoconnect("worp:looper-out-2")
-jack:autoconnect("worp:looper-in-1")
-jack:autoconnect("worp:midi-in")
+jack:connect("worp")
 
 -- vi: ft=lua ts=3 sw=3
 

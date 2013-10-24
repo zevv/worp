@@ -26,6 +26,7 @@ function sandbox_init()
 	-- Initialize env with default lua and worp libraries
 
 	env.print = print
+	env.dump = dump
 	env.io = io
 	env.os = os
 	env.string = string

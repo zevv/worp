@@ -314,13 +314,11 @@ static int l_list_ports(lua_State *L)
 		lua_pushstring(L, ns[i]); lua_setfield(L, -2, "name");
 		lua_pushstring(L, jack_port_type(p)); lua_setfield(L, -2, "type");
 
-		lua_newtable(L);
 		int flags = jack_port_flags(p);
 		if(flags & JackPortIsInput) { lua_pushboolean(L, 1); lua_setfield(L, -2, "input"); }
 		if(flags & JackPortIsOutput) { lua_pushboolean(L, 1); lua_setfield(L, -2, "output"); }
 		if(flags & JackPortIsPhysical) { lua_pushboolean(L, 1); lua_setfield(L, -2, "physical"); }
 		if(flags & JackPortIsTerminal) { lua_pushboolean(L, 1); lua_setfield(L, -2, "terminal"); }
-		lua_setfield(L, -2, "flags");
 
 		lua_newtable(L);
 		const char **cs = jack_port_get_connections(p);
@@ -332,12 +330,7 @@ static int l_list_ports(lua_State *L)
 		free(cs);
 		lua_setfield(L, -2, "connections");
 
-		lua_pushvalue(L, -1);
-		lua_insert(L, -4);
 		lua_settable(L, -3);
-
-		lua_pushvalue(L, -2);
-		lua_setfield(L, -2, ns[i]);
 	}
 	return 1;
 }

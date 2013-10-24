@@ -3,7 +3,6 @@
 -- Some generated music with effects
 --
 
-synth = Fluidsynth.new("synth")
 jack = Jack.new("worp")
 
 
@@ -34,17 +33,6 @@ jack:midi("midi", function(channel, t, d1, d2)
 		if d1 == 4 then f("gain", (v - 0.5) * 30) end
 	end
 end)
-
-jack:autoconnect("worp:fx-out-1")
-jack:autoconnect("worp:fx-out-2")
-jack:autoconnect("worp:midi-in")
-jack:connect("synth:l_00", "worp:fx-in-1")
-jack:connect("synth:r_00", "worp:fx-in-2")
-
-synth:program_change(1, 4)
-synth:program_change(2, 68)
-synth:program_change(3, 42)
-
 
 function mkchord(min, max, n, ns)
 	local os = {}
@@ -92,6 +80,11 @@ end
 m:at_beat("pulse")
 
 m:at_beat("doe", 'i7')
+
+jack:connect("piano", "worp")
+jack:connect("violin", "worp")
+jack:connect("bass", "worp")
+jack:connect("worp", "system:playback")
 
 
 -- vi: ft=lua ts=3 sw=3

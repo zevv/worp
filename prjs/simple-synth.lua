@@ -80,7 +80,7 @@ jack:dsp("synth", 0, 2, function(t)
 	return rev(o)
 end)
 
-jack:conn("worp")
+jack:connect("worp", "system")
 
 -- vi: ft=lua ts=3 sw=3
 

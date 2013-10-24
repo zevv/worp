@@ -4,15 +4,15 @@
 --
 
 ls = Linuxsampler.new("/opt/samples")
+jack = Jack.new()
 
 piano = ls:add("piano", "megapiano.gig")
 violin = ls:add("violin", "megapiano.gig", 0)
 
+jack:connect("piano")
+jack:connect("violin")
+
 jack = Jack.new()
-
-jack:autoconnect("synth:l_00")
-jack:autoconnect("synth:r_00")
-
 
 function mkchord(min, max, n, ns)
 	local os = {}

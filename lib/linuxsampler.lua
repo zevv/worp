@@ -28,8 +28,6 @@ local function add(ls, name, fname, index)
 	if driver then
 		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 NAME='out_1'" % driver)
 		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 NAME='out_2'" % driver)
-		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 JACK_BINDINGS='system:playback_1'" % driver)
-		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 JACK_BINDINGS='system:playback_2'" % driver)
 	end
 
 	local ch = ls:cmd("ADD CHANNEL")

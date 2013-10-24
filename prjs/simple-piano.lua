@@ -20,9 +20,8 @@ jack:midi("midi", function(channel, t, d1, d2)
 	end
 end)
 
-jack:autoconnect("synth:l_00")
-jack:autoconnect("synth:r_00")
-jack:autoconnect("worp:midi-in")
+jack:connect("synth")
+jack:connect("worp")
 
 -- vi: ft=lua ts=3 sw=3
 

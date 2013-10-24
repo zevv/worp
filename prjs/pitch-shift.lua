@@ -98,6 +98,10 @@ s = pitchshift(0.75)
 o = Dsp.osc(80)
 
 jack:midi("midi", function(channel, t, d1, d2)
+	if t == "noteon" then
+		local f = math.pow(2, (d1-60) / 12)
+		s("factor", f)
+	end
 	if t == "cc" then
 		local v = d2 / 127
 		if d1 == 1 then s("factor", v*2 + 0.5) end
@@ -110,9 +114,7 @@ jack:dsp("fx", 1, 1, function(t, i)
 end)
 
 
-jack:autoconnect("worp:fx-out-1")
-jack:autoconnect("worp:fx-in-1")
-jack:autoconnect("worp:midi-in")
+jack:connect("worp")
 
 
 -- vi: ft=lua ts=3 sw=3

@@ -80,24 +80,59 @@ local function jack_midi(jack, name, fn)
 end
 
 
-local function jack_autoconnect(jack, n1)
-	local ps = jack:list_ports()
-	local p1 = ps[n1]
-	if p1 then
-		for i, p2 in ipairs(ps) do
-			if p1.type == p2.type and ((p1.flags.input and p2.flags.output) or (p1.flags.output and p2.flags.input)) then
-				if p2.flags.physical and #p2.connections == 0 then
-					local n2 = p2.name
-					if p1.flags.input then 
-						jack_c.connect(jack.j, n2, n1)
-					else
-						jack_c.connect(jack.j, n1, n2)
+
+local function jack_conn(jack, patt1, patt2)
+
+	patt2 = patt2 or "*"
+	logf(LG_DBG, "Connect %s -> %s", patt1, patt2)
+
+	local function find(ps, patt)
+		local l = {}
+		for _, p in ipairs(ps) do
+			local client = p.name:match("[^:]+")
+			local dir = p.input and "input" or "output"
+			if patt == '*' or p.name:find(patt, 1, true) then
+				l[p.type] = l[p.type] or {}
+				l[p.type][dir] = l[p.type][dir] or {}
+				l[p.type][dir][client] = l[p.type][dir][client] or {}
+				table.insert(l[p.type][dir][client], p)
+			end
+		end
+		return l
+	end
+	
+	-- Find all ports matching given patterns, index by type/direction/client
+	
+	local ps = jack_c.list_ports(jack.j)
+	local l1 = find(ps, patt1)
+	local l2 = find(ps, patt2)
+
+	-- Iterate all types/directions/clients on patt1
+	
+	for t, ds in pairs(l1) do
+		for d1, cs in pairs(ds) do
+			for c1, ps1 in pairs(cs) do
+
+				-- find and connect matching ports from patt2
+
+				local d2 = (d1 == "input") and "output" or "input"
+				if l2[t] and l2[t][d2] then
+					for c2, ps2 in pairs(l2[t][d2]) do
+						if c2 ~= c1 then
+							for i = 1, math.max(#ps1, #ps2) do
+								local p1 = ps1[math.min(i, #ps1)]
+								local p2 = ps2[math.min(i, #ps2)]
+								if p1.input then p1,p2 = p2,p1 end
+								logf(LG_DBG, "  %s -> %s", p1.name, p2.name)
+								jack_c.connect(jack.j, p1.name, p2.name)
+							end
+						end
 					end
-					if p1.type:find("audio") then return end
 				end
 			end
 		end
 	end
+	
 end
 
 
@@ -111,16 +146,7 @@ local function new(name, port_list, fn)
 
 		dsp = jack_dsp,
 		midi = jack_midi,
-		autoconnect = jack_autoconnect,
-		connect = function(_, p1, p2)
-			return jack_c.connect(j, p1, p2)
-		end,
-		disconnect = function(_, p1, p2)
-			return jack_c.disconnect(j, p1, p2)
-		end,
-		list_ports = function(_)
-			return jack_c.list_ports(j)
-		end,
+		connect = jack_conn,
 
 		-- data
 	

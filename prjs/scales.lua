@@ -8,9 +8,9 @@ jack = Jack.new("worp")
 linuxsampler = Linuxsampler.new("synth", "/opt/samples")
 linuxsampler:reset()
 
-piano = linuxsampler:add("grand.gig", 0)
-violin = linuxsampler:add("concert_harp.gig", 1)
-bass = linuxsampler:add("basses.gig", 1)
+piano = linuxsampler:add("concert_harp.gig", 2)
+violin = linuxsampler:add("violins.gig", 5)
+bass = linuxsampler:add("basses.gig", 0)
 
 function rl(vs)
 	return vs[math.random(1, #vs)]
@@ -56,7 +56,7 @@ function doe(c)
 	local vel = rl { 0.5, 0.6 }
 	for i = 1, #ns do
 		local n = ns[i]
-		play(violin, n, vel, d)
+		play(violin, n, vel/4, d)
 	end
 	local prog = { 
 		i7 = { 'vii7', 'v7' },

@@ -45,8 +45,9 @@ end
 
 
 local function reset(ls)
-	for ch = 0, 32 do
-		ls:cmd("SEND CHANNEL MIDI_DATA CC %d 120 0" % ch)
+	local cs = ls:cmd("LIST CHANNELS")
+	for c in cs:gmatch("%d+") do
+		ls:cmd("SEND CHANNEL MIDI_DATA CC %s 120 0" % c)
 	end
 end
 

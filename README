@@ -65,9 +65,11 @@ chunk. All code is loaded into the same environment, so use 'globals' instead.
 Misc
 ====
 
-During the development of worp I learned of the existence of Impromptu
-(http://impromptu.moso.com.au/), which shares some of the basic design
-principles with Worp (delayed recursion, live coding). I later shamelessly
-stole some more ideas, mostly from the pitch class library which is used for
-working with scales and chords.
+During the development of worp I learned of the existence of Impromptu[1] and
+SuperCollider[2], which both have features similar to worp (Event scheduling,
+live coding, etc).  I've shamelessly stolen some other ideas from both projects
+where I saw fit.
+
+1. http://impromptu.moso.com.au/
+2. http://supercollider.sourceforge.net/
 

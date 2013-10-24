@@ -275,34 +275,6 @@ return {
 
 	end,
 
-		
-	-- Very naive pitch shifter
-	
-	pitchshift = function(factor, size)
-
-		size = size or 4000
-		local buf = {}
-		local head = 0
-		local tail = 0
-
-		for i = 0, size do buf[i] = 0 end
-
-		return function(v, arg)
-			if v == "factor" then
-				factor = arg
-				return
-			end
-			head = (head + factor) % size
-			tail = (tail + 1) % size
-			buf[tail] = v
-			local i1 = math.floor(head)
-			local i2 = (i1 + 1) % size
-			local f = head - i1
-			return buf[i1] * (1-f) + buf[i2] * f
-		end
-	end
-
-
 }
 
 

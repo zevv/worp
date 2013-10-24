@@ -4,10 +4,6 @@
 --
 
 jack = Jack.new("worp")
-osc = Dsp.osc()
-adsr = Dsp.adsr(0.1, 0.2, 0.6, 0.3)
-rev = Dsp.reverb(0.5, 0.5, 0.9, 0.6)
-vel = 1
 
 
 -- Voice generator, return a function to start, stop and generate sound.
@@ -69,6 +65,8 @@ end)
 -- Add up the output of all running voices. Voices that are done playing are
 -- removed from the list
 
+rev = Dsp.reverb(0.5, 0.5, 0.9, 0.6)
+
 jack:dsp("synth", 0, 2, function(t)
 	local o = 0
 	for note, v in pairs(vs) do
@@ -82,9 +80,7 @@ jack:dsp("synth", 0, 2, function(t)
 	return rev(o)
 end)
 
-jack:autoconnect("worp:synth-out-1")
-jack:autoconnect("worp:synth-out-2")
-jack:autoconnect("worp:midi-in")
+jack:conn("worp")
 
 -- vi: ft=lua ts=3 sw=3
 

@@ -80,6 +80,10 @@ local function jack_midi(jack, name, fn)
 end
 
 
+--
+-- Connect jack ports. All ports matching patt1 are connected to ports matching
+-- patt2.  If patt2 is not given, it defaults to '*'
+--
 
 local function jack_conn(jack, patt1, patt2)
 

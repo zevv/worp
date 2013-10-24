@@ -1,16 +1,8 @@
 
-all: jack_c.so posix.so
+all: jack_c.so
 
-
-CFLAGS += -Wall -Werror
-CFLAGS += -shared -fPIC
-CFLAGS += $(shell pkg-config --cflags luajit jack)
-CFLAGS += -g
-
-LDFLAGS += $(shell pkg-config --libs luajit jack) 
-LDFLAGS += -lrt -lcrypt
-LDFLAGS += -g
-
+CFLAGS += $(shell pkg-config --cflags jack)
+LDFLAGS += $(shell pkg-config --libs jack) 
 
 %.so: %.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)

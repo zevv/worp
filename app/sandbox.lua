@@ -35,6 +35,8 @@ function sandbox_init()
 	env.ipairs = ipairs
 	env.at = at
 	env.play = play
+	env.time = time
+	env.require = require
 
 	env.Chord = require "chord"
 	env.Linuxsampler = require "linuxsampler"

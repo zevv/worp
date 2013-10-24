@@ -5,7 +5,7 @@
 -- thread while waiting for linuxsampler to reply.
 --
 
-local function tx(ls, data)
+local function cmd(ls, data)
 
 	logf(LG_DMP, "tx> %s", data)
 	P.send(ls.fd, data .. "\n")
@@ -23,29 +23,29 @@ local function add(ls, name, fname, index)
 
 	fname = ls.path .. "/" .. fname
 
-	local driver = tx(ls, "CREATE AUDIO_OUTPUT_DEVICE JACK NAME=%q" % name)
+	local driver = ls:cmd("CREATE AUDIO_OUTPUT_DEVICE JACK NAME=%q" % name)
 
 	if driver then
-		ls:tx("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 NAME='out_1'" % driver)
-		ls:tx("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 NAME='out_2'" % driver)
-		ls:tx("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 JACK_BINDINGS='system:playback_1'" % driver)
-		ls:tx("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 JACK_BINDINGS='system:playback_2'" % driver)
+		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 NAME='out_1'" % driver)
+		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 NAME='out_2'" % driver)
+		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 JACK_BINDINGS='system:playback_1'" % driver)
+		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 JACK_BINDINGS='system:playback_2'" % driver)
 	end
 
-	local ch = tx(ls, "ADD CHANNEL")
-	ls:tx("LOAD ENGINE gig %d" % ch)
-	ls:tx("SET CHANNEL AUDIO_OUTPUT_DEVICE %d 0" % ch)
-	ls:tx("LOAD INSTRUMENT %q %d %d" % { fname, index or 0, ch })
+	local ch = ls:cmd("ADD CHANNEL")
+	ls:cmd("LOAD ENGINE gig %d" % ch)
+	ls:cmd("SET CHANNEL AUDIO_OUTPUT_DEVICE %d 0" % ch)
+	ls:cmd("LOAD INSTRUMENT %q %d %d" % { fname, index or 0, ch })
 
-	local info = ls:tx("GET CHANNEL INFO %d" % ch)
+	local info = ls:cmd("GET CHANNEL INFO %d" % ch)
 	local inst = info:match("INSTRUMENT_NAME: ([^\n\r]+)") or "-"
 	logf(LG_INF, "linuxsampler %q channel %d: %s", name, ch, inst)
 
 	return function(onoff, key, vel)
 		if onoff then
-			tx(ls, "SEND CHANNEL MIDI_DATA NOTE_ON %d %d %d\n" % { ch, key, vel * 127 })
+			ls:cmd("SEND CHANNEL MIDI_DATA NOTE_ON %d %d %d\n" % { ch, key, vel * 127 })
 		else
-			tx(ls, "SEND CHANNEL MIDI_DATA NOTE_OFF %d %d %d\n" % { ch, key, vel * 127 })
+			ls:cmd("SEND CHANNEL MIDI_DATA NOTE_OFF %d %d %d\n" % { ch, key, vel * 127 })
 		end
 	end
 
@@ -69,7 +69,7 @@ local function new(path)
 		-- methods
 		
 		add = add,
-		tx = tx,
+		cmd = cmd,
 
 		-- data
 
@@ -86,9 +86,9 @@ local function new(path)
 			logf(LG_WRN, "Connection to linuxsampler lost")
 			return false
 		end
-		for l in data:gmatch("[^\r\n]+") do
+		for l in data:gmatch("([^\r\n]*)[\n\r]+") do
 			logf(LG_DMP, "rx> %s", l)
-			local rv = l:match("^OK%[?(%d*)%]?") or l:match("^%.")
+			local rv = l:match("^OK%[?(%d*)%]?") or l:match("^%.") or l:match("^$")
 			local err = l:match("ERR:(.+)") or l:match("WRN:(.+)")
 			if rv then
 				ls.rx_fn(rv and tonumber(rv) or ls.rx_buf)
@@ -100,7 +100,7 @@ local function new(path)
 		end
 	end)
 
-	tx(ls, "RESET")
+	ls:cmd("RESET")
 
 	return ls
 

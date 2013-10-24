@@ -9,6 +9,7 @@ local function cmd(ls, data)
 
 	logf(LG_DMP, "tx> %s", data)
 	P.send(ls.fd, data .. "\n")
+	ls.rx_buf = ""
 	
 	if coroutine.running() then
 		ls.rx_fn = resumer()
@@ -19,38 +20,38 @@ local function cmd(ls, data)
 end
 
 
-local function add(ls, name, fname, index)
+local function add(ls, fname, index)
 
 	fname = ls.path .. "/" .. fname
 
-	local driver = ls:cmd("CREATE AUDIO_OUTPUT_DEVICE JACK NAME=%q" % name)
-
-	if driver then
-		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 NAME='out_1'" % driver)
-		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 NAME='out_2'" % driver)
-	end
-
 	local ch = ls:cmd("ADD CHANNEL")
-	ls:cmd("LOAD ENGINE gig %d" % ch)
-	ls:cmd("SET CHANNEL AUDIO_OUTPUT_DEVICE %d 0" % ch)
-	ls:cmd("LOAD INSTRUMENT %q %d %d" % { fname, index or 0, ch })
+	ls:cmd("LOAD ENGINE gig %s" % ch)
+	ls:cmd("SET CHANNEL AUDIO_OUTPUT_DEVICE %s %s" % { ch, ls.audio_dev })
+	ls:cmd("LOAD INSTRUMENT %q %s %s" % { fname, index or 0, ch })
 
-	local info = ls:cmd("GET CHANNEL INFO %d" % ch)
+	local info = ls:cmd("GET CHANNEL INFO %s" % ch)
 	local inst = info:match("INSTRUMENT_NAME: ([^\n\r]+)") or "-"
-	logf(LG_INF, "linuxsampler %q channel %d: %s", name, ch, inst)
-
+	logf(LG_INF, "linuxsampler channel %s: %s", ch, inst)
+	
 	return function(onoff, key, vel)
 		if onoff then
-			ls:cmd("SEND CHANNEL MIDI_DATA NOTE_ON %d %d %d\n" % { ch, key, vel * 127 })
+			ls:cmd("SEND CHANNEL MIDI_DATA NOTE_ON %s %s %s\n" % { ch, key, vel * 127 })
 		else
-			ls:cmd("SEND CHANNEL MIDI_DATA NOTE_OFF %d %d %d\n" % { ch, key, vel * 127 })
+			ls:cmd("SEND CHANNEL MIDI_DATA NOTE_OFF %s %s %s\n" % { ch, key, vel * 127 })
 		end
 	end
 
 end
 
 
-local function new(path)
+local function reset(ls)
+	for ch = 0, 32 do
+		ls:cmd("SEND CHANNEL MIDI_DATA CC %d 120 0" % ch)
+	end
+end
+
+
+local function new(name, path)
 
 	local fd, err = P.socket(P.AF_INET, P.SOCK_STREAM, 0)
 	if not fd then
@@ -68,9 +69,11 @@ local function new(path)
 		
 		add = add,
 		cmd = cmd,
+		reset = reset,
 
 		-- data
 
+		name = name,
 		path = path or "",
 		fd = fd,
 		tx_queue = {},
@@ -86,10 +89,10 @@ local function new(path)
 		end
 		for l in data:gmatch("([^\r\n]*)[\n\r]+") do
 			logf(LG_DMP, "rx> %s", l)
-			local rv = l:match("^OK%[?(%d*)%]?") or l:match("^%.") or l:match("^$")
+			local rv = l:match("^OK%[?(%d*)%]?") or l:match("^%.") or l:match("^([%d,]*)$")
 			local err = l:match("ERR:(.+)") or l:match("WRN:(.+)")
 			if rv then
-				ls.rx_fn(rv and tonumber(rv) or ls.rx_buf)
+				ls.rx_fn(#ls.rx_buf > 0 and ls.rx_buf or rv)
 			elseif err then
 				ls.rx_fn(nil, err)
 			else
@@ -97,8 +100,23 @@ local function new(path)
 			end
 		end
 	end)
+	
+	-- Find existing audio dev with given name, or create if needed
 
-	ls:cmd("RESET")
+	local ds = ls:cmd("LIST AUDIO_OUTPUT_DEVICES")
+	for d in ds:gmatch("%d+") do
+		local info = ls:cmd("GET AUDIO_OUTPUT_DEVICE INFO %d" % d)
+		local name2 = info:match("NAME: '(.-)'")
+		if name == name2 then
+			ls.audio_dev = d
+		end
+	end
+
+	if not ls.audio_dev then
+		ls.audio_dev = ls:cmd("CREATE AUDIO_OUTPUT_DEVICE JACK NAME=%q" % name)
+		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 0 NAME='out_1'" % ls.audio_dev)
+		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 NAME='out_2'" % ls.audio_dev)
+	end
 
 	return ls
 

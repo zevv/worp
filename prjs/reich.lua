@@ -3,16 +3,15 @@
 -- Some generated music with effects
 --
 
-ls = Linuxsampler.new("/opt/samples")
-jack = Jack.new()
-
-piano = ls:add("piano", "megapiano.gig")
-violin = ls:add("violin", "megapiano.gig", 0)
-
-jack:connect("piano")
-jack:connect("violin")
+ls = Linuxsampler.new("worp", "/opt/samples")
+ls:reset()
 
 jack = Jack.new()
+
+piano = ls:add("grand.gig")
+violin = ls:add("grand.gig", 0)
+
+jack:connect("worp")
 
 function mkchord(min, max, n, ns)
 	local os = {}

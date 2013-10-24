@@ -1,27 +1,25 @@
 
 --
--- Some generated music with effects
+-- Some generated music with dsp reverb
 --
 
 jack = Jack.new("worp")
 
+linuxsampler = Linuxsampler.new("synth", "/opt/samples")
+linuxsampler:reset()
+
+piano = linuxsampler:add("grand.gig", 0)
+violin = linuxsampler:add("concert_harp.gig", 1)
+bass = linuxsampler:add("basses.gig", 1)
 
 function rl(vs)
 	return vs[math.random(1, #vs)]
 end
 
-linuxsampler = Linuxsampler.new("/opt/samples")
-
-piano = linuxsampler:add("piano", "maestro_concert_grand.gig", 0)
-violin = linuxsampler:add("violin", "concert_harp.gig", 1)
-bass = linuxsampler:add("bass", "basses.gig", 1)
-
-
-f = Dsp.filter("lp", 1000, 1, -3)
-r = Dsp.reverb(0.0, 1.0, 1, 0.1)
+r = Dsp.reverb(0.5, 0.5, 0.8, 0.1)
 
 jack:dsp("fx", 2, 2, function(t, i1, i2)
-	return r(f(i1, i2))
+	return r(i1, i2)
 end)
 
 jack:midi("midi", function(channel, t, d1, d2)
@@ -81,10 +79,9 @@ m:at_beat("pulse")
 
 m:at_beat("doe", 'i7')
 
-jack:connect("piano", "worp")
-jack:connect("violin", "worp")
-jack:connect("bass", "worp")
-jack:connect("worp", "system:playback")
+jack:connect("synth", "system")
+---jack:connect("synth", "worp:fx-in")
+---jack:connect("worp:fx-out", "system")
 
 
 -- vi: ft=lua ts=3 sw=3

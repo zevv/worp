@@ -8,14 +8,7 @@ fs = Fluidsynth.new("synth", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
 
 piano = fs:add(1)
 
-jack:midi("midi", function(channel, t, d1, d2)
-	if t == "noteon" then 
-		piano(true, d1, d2 / 127) 
-	end
-	if t == "noteoff" then 
-		piano(false, d1, d2 / 127) 
-	end
-end)
+jack:midi_map_instr("midi", 1, piano)
 
 jack:connect("synth")
 jack:connect("worp")

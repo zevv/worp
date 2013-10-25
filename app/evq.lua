@@ -4,6 +4,7 @@ t_now = 0
 local evs = {}
 local fds = {}
 local t_start
+local running = true
 
 --
 -- Schedule function 'fn' to be called in 't' seconds. 'fn' can be as string,
@@ -11,6 +12,7 @@ local t_start
 --
 
 function at(t, fn, ...)
+	print(t_now, t)
 	local ev = {
 		t_when = t_now + t,
 		fn = fn,
@@ -60,12 +62,20 @@ end
 
 
 --
+-- Exit event loop
+--
+
+function stop()
+	running = false
+end
+
+--
 -- Run the main event loop, scheduling timers and handling file descriptors
 --
 
 function mainloop()
 
-	while true do
+	while running do
 
 		local dt = 10
 		local ev = evs[#evs]

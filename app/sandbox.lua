@@ -35,6 +35,7 @@ function sandbox_init()
 	env.pairs = pairs
 	env.ipairs = ipairs
 	env.at = at
+	env.stop = stop
 	env.play = play
 	env.time = time
 	env.require = require

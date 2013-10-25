@@ -63,20 +63,48 @@ local function jack_midi(jack, name, fn)
 		[0xc0] = "pc",
 	}
 
-	local fd = jack_c.add_midi(jack.j, name)
+	local midi = jack.midi_list[name]
 
-	watch_fd(fd, function()
-		local msg = P.read(fd, 3)
+	if not midi then
 
-		local b1, b2, b3 = string.byte(msg, 1, #msg)
+		midi = {
+			fd = jack_c.add_midi(jack.j, name),
+			fn_list = {}
+		}
 
-		local t = bit.band(b1, 0xf0)
-		t = midi_msg[t] or t
-		local channel = bit.band(b1, 0x0f) + 1
-		fn(channel, t, b2, b3)
-		
+		jack.midi_list[name] = midi
+
+		watch_fd(midi.fd, function()
+			local msg = P.read(midi.fd, 3)
+
+			local b1, b2, b3 = string.byte(msg, 1, #msg)
+
+			local t = bit.band(b1, 0xf0)
+			t = midi_msg[t] or t
+			local channel = bit.band(b1, 0x0f) + 1
+			for fn in pairs(midi.fn_list) do
+				fn(channel, t, b2, b3)
+			end
+			
+		end)
+	end
+
+	midi.fn_list[fn] = true
+
+end
+
+
+local function jack_midi_map_instr(jack, name, channel, instr)
+	jack:midi(name, function(ch, t, d1, d2)
+		if ch == channel then
+			if t == "noteon" then 
+				instr(true, d1, d2/127)
+			end
+			if t == "noteoff" then 
+				instr(false, d1, d2/127)
+			end
+		end
 	end)
-
 end
 
 
@@ -150,6 +178,7 @@ local function new(name, port_list, fn)
 
 		dsp = jack_dsp,
 		midi = jack_midi,
+		midi_map_instr = jack_midi_map_instr,
 		connect = jack_conn,
 
 		-- data
@@ -158,6 +187,7 @@ local function new(name, port_list, fn)
 		srate = srate,
 		bsize = bsize,
 		group_list = {},
+		midi_list = {},
 
 	}
 

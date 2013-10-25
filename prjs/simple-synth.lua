@@ -5,12 +5,12 @@
 
 jack = Jack.new("worp")
 
--- Voice generator, return dsp output function
+-- Voice generator
 
 function voice(f, v)
 
-	local osc1 = Dsp.saw(f * 0.505)
-	local osc2 = Dsp.saw(f)
+	local osc1 = Dsp.triangle(f * 0.505)
+	local osc2 = Dsp.triangle(f)
 	local lfo = Dsp.osc(8)
 	local filt1 = Dsp.filter("lp", 100, 2)
 	local adsr = Dsp.adsr(0.1, 0.1, 0.6, 2)
@@ -33,27 +33,20 @@ function voice(f, v)
 	end
 end
 
+-- Create polyphonic instrument from the above sound generator
 
 instr, dsp = Dsp.poly(voice)
 
+-- Map the instrument to jack port 'midi' channel 1
 
--- Handle midi note on and off messages. Generate new voices for new notes and
--- start/stop ADSR's
+jack:midi_map_instr("midi", 1, instr)
 
-jack:midi("midi", function(channel, t, d1, d2)
-	if t == "noteon" then 
-		instr(true, d1, d2)
-	end
-	if t == "noteoff" then 
-		instr(false, d1, d2)
-	end
-end)
-
-
--- Add up the output of all running voices. Voices that are done playing are
--- removed from the list
+-- Use instrument dsp function as sound generator for DSP
 
 jack:dsp("synth", 0, 1, dsp)
+
+-- Connect ports
+
 jack:connect("worp")
 
 -- vi: ft=lua ts=3 sw=3

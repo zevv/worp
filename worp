@@ -1,7 +1,7 @@
 #!/usr/bin/luajit
 
 package.path = package.path .. ";./lib/?.lua"
-package.cpath = package.cpath .. ";./lib/?.so"
+package.cpath = package.cpath .. ";./lib/?.so;./app/?.so"
 
 --
 -- Application libraries

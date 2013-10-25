@@ -17,9 +17,6 @@ function voice(f, v)
 	local adsr2 = Dsp.adsr(1.9, 0.1, 0.6, 1)
 	local vel = v
 
-	adsr(true)
-	adsr2(true)
-
 	return function(cmd)
 
 		if cmd == "stop" then

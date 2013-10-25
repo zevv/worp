@@ -52,12 +52,12 @@ return {
 
 
 	adsr = function(a, d, s, r)
-		local v, state, dv = 0, nil, 0
+		local state, v, dv = 'a', 0, 1/(srate*a)
 		return function(onoff)
-			if onoff == false then
-				state, dv = 'r', -s/(srate*r)
-			elseif onoff == true then
+			if onoff == true then
 				state, dv = 'a', 1/(srate*a)
+			elseif onoff == false then
+				state, dv = 'r', -s/(srate*r)
 			elseif state == 'a' and v >= 1 then
 				state, dv = 'd', -(1-s)/(srate*d)
 			elseif state == 'd' and v <= s then
@@ -66,8 +66,8 @@ return {
 				state, dv = nil, 0
 			end
 			v = v + dv
-			if v < 0 then v = 0 end
-			if v > 1 then v = 1 end
+			v = math.max(v, 0)
+			v = math.min(v, 1)
 			return v
 		end
 	end,

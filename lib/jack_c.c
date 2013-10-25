@@ -78,7 +78,7 @@ static int process2(jack_nframes_t nframes, void *arg)
 
 				int avail = jack_ringbuffer_read_space(rb);
 
-				if(avail < len * 2) need_data = 1;
+				if(avail < len * 3) need_data = 1;
 
 				if(avail >= len) {
 					sample_t *buf = jack_port_get_buffer(p, nframes);

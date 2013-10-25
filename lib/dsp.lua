@@ -293,30 +293,54 @@ local function reverb(_, wet, dry, room, damp)
 end
 
 
+--
 -- Make polyphonic synth. Takes sound generator function, and 
 -- returns an instrument function and dsp function
+--
 
-local function poly(_, fn_gen)
+local function poly(_, fn_gen, max)
 
 	local vs = {}
+	local nvs = 0
 
 	local fn_note = function(onoff, note, vel)
 		local freq = 440 * math.pow(2, (note-57) / 12)
 		if onoff then
-			vs[note] = fn_gen(freq, vel)
+			if max and nvs >= max then
+				local t_oldest, v_oldest = time(), nil
+				for v in pairs(vs) do
+					if v.t < t_oldest then
+						v_oldest, t_oldest = v, t_oldest
+					end
+				end
+				vs[v_oldest] = nil
+				nvs = nvs - 1
+			end
+			local v = {
+				t = time(),
+				note = note,
+				fn = fn_gen(freq, vel)
+			}
+			vs[v] = true
+			nvs = nvs + 1
 		else
-			vs[note]("stop")
+			for v in pairs(vs) do
+				if v.note == note then
+					v.fn("stop")
+				end
+			end
 		end
 	end
 
 	local fn_dsp = function()
 		local o = 0
-		for note, v in pairs(vs) do
-			local p = v()
+		for v in pairs(vs) do
+			local p = v.fn()
 			if p then
 				o = o + p * 0.1
 			else
-				vs[note] = nil
+				vs[v] = nil
+				nvs = nvs - 1
 			end
 		end
 		return o

@@ -58,7 +58,7 @@ end
 
 
 local function triangle(_, freq)
-	local s = saw(freq)
+	local s = saw(_, freq)
 	local d = diode()
 	return function(cmd, val)
 		return d(s(cmd, val)) * 2 - 1

@@ -3,10 +3,10 @@
 -- Filter test. White noise generator is passed through a CC controlled filter.
 --
 
-jack = Jack.new("worp")
+jack = Jack:new("worp")
 
-f = Dsp.filter("bp", 1000, 5)
-r = Dsp.reverb()
+f = Dsp:filter("bp", 1000, 5)
+r = Dsp:reverb()
 
 jack:midi("midi", function(channel, t, d1, d2)
 	if t == "cc" then

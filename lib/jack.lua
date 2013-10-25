@@ -94,6 +94,10 @@ local function jack_midi(jack, name, fn)
 end
 
 
+--
+-- Map given instrument function to channel 'channel' of midi port 'name'
+--
+
 local function jack_midi_map_instr(jack, name, channel, instr)
 	jack:midi(name, function(ch, t, d1, d2)
 		if ch == channel then
@@ -110,7 +114,7 @@ end
 
 --
 -- Connect jack ports. All ports matching patt1 are connected to ports matching
--- patt2.  If patt2 is not given, it defaults to '*'
+-- patt2. If patt2 is not given, it defaults to '*'
 --
 
 local function jack_conn(jack, patt1, patt2)
@@ -168,7 +172,11 @@ local function jack_conn(jack, patt1, patt2)
 end
 
 
-local function new(name, port_list, fn)
+--
+-- Create new jack client with the given name
+--
+
+local function new(_, name)
 	
 	local j, srate, bsize = jack_c.open(name or "worp")
 

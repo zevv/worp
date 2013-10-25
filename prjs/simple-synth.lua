@@ -3,18 +3,18 @@
 -- A simple polyphonic synth, using DSP code to generate nodes on midi input
 --
 
-jack = Jack.new("worp")
+jack = Jack:new("worp")
 
 -- Voice generator
 
 function voice(f, v)
 
-	local osc1 = Dsp.triangle(f * 0.505)
-	local osc2 = Dsp.triangle(f)
-	local lfo = Dsp.osc(8)
-	local filt1 = Dsp.filter("lp", 100, 2)
-	local adsr = Dsp.adsr(0.1, 0.1, 0.6, 2)
-	local adsr2 = Dsp.adsr(1.9, 0.1, 0.6, 1)
+	local osc1 = Dsp:triangle(f * 0.505)
+	local osc2 = Dsp:triangle(f)
+	local lfo = Dsp:osc(8)
+	local filt1 = Dsp:filter("lp", 100, 2)
+	local adsr = Dsp:adsr(0.1, 0.1, 0.6, 2)
+	local adsr2 = Dsp:adsr(1.9, 0.1, 0.6, 1)
 	local vel = v
 
 	return function(cmd)
@@ -35,7 +35,7 @@ end
 
 -- Create polyphonic instrument from the above sound generator
 
-instr, dsp = Dsp.poly(voice)
+instr, dsp = Dsp:poly(voice)
 
 -- Map the instrument to jack port 'midi' channel 1
 

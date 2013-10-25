@@ -21,12 +21,20 @@ ffi.cdef [[
 ]]
 
 
+--
+-- Send note off to all channels
+--
+
 local function reset(fluidsynth)
 	for i = 1, 16 do
 		fs.fluid_synth_all_notes_off(fluidsynth.synth, i);
 	end
 end
 
+
+--
+-- Add channel with given program, return instrument function
+--
 
 local function add(fluidsynth, prog)
 
@@ -46,7 +54,12 @@ local function add(fluidsynth, prog)
 end
 
 
-local function new(name, fname)
+--
+-- Create fluidsynth instance, create and attach jack client with the given
+-- name
+--
+
+local function new(_, name, fname)
 
 	name = name or "Fluidsynth"
 

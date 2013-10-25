@@ -3,10 +3,10 @@
 -- Some generated music with effects
 --
 
-ls = Linuxsampler.new("worp", "/opt/samples")
+ls = Linuxsampler:new("worp", "/opt/samples")
 ls:reset()
 
-jack = Jack.new()
+jack = Jack:new()
 
 piano = ls:add("grand.gig")
 violin = ls:add("grand.gig", 0)

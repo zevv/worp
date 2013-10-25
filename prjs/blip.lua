@@ -3,10 +3,10 @@
 -- Filter test. White noise generator is passed through a CC controlled filter.
 --
 
-jack = Jack.new("worp")
+jack = Jack:new("worp")
 
 
-f = Dsp.filter("lp", 2000, 5)
+f = Dsp:filter("lp", 2000, 5)
 
 d = 0
 e = 0
@@ -24,12 +24,12 @@ jack:midi("midi", function(channel, t, d1, d2)
 end)
 
 
-o = Dsp.osc(60)
-s = Dsp.saw(90.5)
+o = Dsp:osc(60)
+s = Dsp:saw(90.5)
 
 print(s)
 
-r = Dsp.reverb()
+r = Dsp:reverb()
 
 function rl(ns)
 	return ns[math.random(1, #ns)]
@@ -47,17 +47,17 @@ function rev()
 	at(rl { 1, 2, 3 } * .15, "rev")
 	a2 = math.random() * 0.03
 	at(0.15 * rl { 1 }, function()
-		oo2 = Dsp.osc(math.random(10, 600))
+		oo2 = Dsp:osc(math.random(10, 600))
 		at(0.15/2 * rl { 1, 2 }, function()
 			a2 = 0
 		end)
 	end)
 end
 
-oo1 = Dsp.osc(9000)
-oo2 = Dsp.osc(100)
+oo1 = Dsp:osc(9000)
+oo2 = Dsp:osc(100)
 o2 = function() oo1(oo2() * 2000 + 10000) return oo1() end
---o2 = Dsp.osc(10000)
+--o2 = Dsp:osc(10000)
 rev()
 
 sawvol = 0.04

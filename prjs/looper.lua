@@ -3,7 +3,7 @@
 -- Simple 4 track looper controlled by Akai MKP mini
 --
 
-jack = Jack.new("worp")
+jack = Jack:new("worp")
 
 local function pan(v, p)
 	return math.max(1 - p, 1) * v, math.max(1 + p, 1) * v

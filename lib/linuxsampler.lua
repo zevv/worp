@@ -5,6 +5,11 @@
 -- thread while waiting for linuxsampler to reply.
 --
 
+--
+-- Execute a linuxsampler command and returns the results. This function
+-- assumes the caller is running in a coroutine if an answer is required
+--
+
 local function cmd(ls, data)
 
 	logf(LG_DMP, "tx> %s", data)
@@ -19,6 +24,11 @@ local function cmd(ls, data)
 	end
 end
 
+
+--
+-- Add a linuxsampler channel and load the instrument from the given file and
+-- index, return instrument function
+--
 
 local function add(ls, fname, index)
 
@@ -44,6 +54,10 @@ local function add(ls, fname, index)
 end
 
 
+--
+-- Send noteoff to all active channels
+--
+
 local function reset(ls)
 	local cs = ls:cmd("LIST CHANNELS")
 	for c in cs:gmatch("%d+") do
@@ -52,7 +66,12 @@ local function reset(ls)
 end
 
 
-local function new(name, path)
+--
+-- Create new linuxsampler connection and create jack audio client
+-- with the given name.
+--
+
+local function new(_, name, path)
 
 	local fd, err = P.socket(P.AF_INET, P.SOCK_STREAM, 0)
 	if not fd then

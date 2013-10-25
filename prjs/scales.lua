@@ -3,9 +3,9 @@
 -- Some generated music with dsp reverb
 --
 
-jack = Jack.new("worp")
+jack = Jack:new("worp")
 
-linuxsampler = Linuxsampler.new("synth", "/opt/samples")
+linuxsampler = Linuxsampler:new("synth", "/opt/samples")
 linuxsampler:reset()
 
 piano = linuxsampler:add("concert_harp.gig", 2)
@@ -16,7 +16,7 @@ function rl(vs)
 	return vs[math.random(1, #vs)]
 end
 
-r = Dsp.reverb(0.5, 0.5, 0.8, 0.1)
+r = Dsp:reverb(0.5, 0.5, 0.8, 0.1)
 
 jack:dsp("fx", 2, 2, function(t, i1, i2)
 	return r(i1, i2)

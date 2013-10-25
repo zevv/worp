@@ -29,7 +29,7 @@ alsa.snd_mixer_selem_register(handle[0], ffi.NULL, ffi.NULL);
 alsa.snd_mixer_load(handle[0]);
 
 
-local function new(name)
+local function new(_, name)
 
    local sid = ffi.new("snd_mixer_selem_id_t *[1]")
    sid = ffi.new("snd_mixer_selem_id_t[1]")

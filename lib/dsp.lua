@@ -2,7 +2,7 @@
 srate = 44100
 
 
-local function delay(t)
+local function delay(_, t)
 	local s = t * 44100
 	local head = 1
 	local buf = {}
@@ -14,19 +14,19 @@ local function delay(t)
 end
 
 
-local function noise()
+local function noise(_)
 	return math.random
 end
 
 
-local function diode()
+local function diode(_)
 	return function(v)
 		return v > 0 and v or -v
 	end
 end
 
 
-local function osc(freq)
+local function osc(_, freq)
 	local cos = math.cos
 	local i, di = 0, 0
 	local fn = function(cmd, v)
@@ -42,7 +42,7 @@ local function osc(freq)
 end
 
 
-local function saw(freq)
+local function saw(_, freq)
 	local v, dv = 0, 0
 	local fn = function(cmd, val)
 		if cmd == "f" then
@@ -57,7 +57,7 @@ local function saw(freq)
 end
 
 
-local function triangle(freq)
+local function triangle(_, freq)
 	local s = saw(freq)
 	local d = diode()
 	return function(cmd, val)
@@ -66,7 +66,7 @@ local function triangle(freq)
 end
 
 
-local function adsr(a, d, s,r)
+local function adsr(_, a, d, s,r)
 	local state, v, dv = 'a', 0, 1/(srate*a)
 	return function(onoff)
 		if onoff == true then
@@ -90,7 +90,7 @@ end
 		
 -- Biquads, based on http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
 
-local function filter(ft, f0, Q, gain)
+local function filter(_, ft, f0, Q, gain)
 
 	local fs = 44100
 	local ft = ft or "lp"
@@ -190,7 +190,7 @@ end
 		
 -- based on Jezar's public domain C++ sources,
 
-local function reverb(wet, dry, room, damp)
+local function reverb(_, wet, dry, room, damp)
 
 	local function allpass(bufsize)
 		local buffer = {}
@@ -296,7 +296,7 @@ end
 -- Make polyphonic synth. Takes sound generator function, and 
 -- returns an instrument function and dsp function
 
-poly = function(fn_gen)
+local function poly(_, fn_gen)
 
 	local vs = {}
 

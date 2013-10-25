@@ -93,9 +93,9 @@ function pitchshift(factor)
 	end
 end
 
-jack = Jack.new("worp")
+jack = Jack:new("worp")
 s = pitchshift(0.75)
-o = Dsp.osc(80)
+o = Dsp:osc(80)
 
 jack:midi("midi", function(channel, t, d1, d2)
 	if t == "noteon" then

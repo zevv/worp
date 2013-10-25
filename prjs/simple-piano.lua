@@ -3,8 +3,8 @@
 -- A simple midi piano using fluidsynth
 --
 
-jack = Jack.new("worp")
-fs = Fluidsynth.new("synth", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
+jack = Jack:new("worp")
+fs = Fluidsynth:new("synth", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
 
 piano = fs:add(1)
 

@@ -23,9 +23,9 @@ return {
 	osc = function(freq)
 		local cos = math.cos
 		local i, di = 0, 0
-		local fn = function(f)
-			if f then 
-				di = math.pi * 2 * f/srate 
+		local fn = function(cmd, v)
+			if cmd == "f" then
+				di = math.pi * 2 * v/srate 
 				return
 			end
 			i = i + di
@@ -37,14 +37,16 @@ return {
 
 
 	saw = function(freq)
-		local v, dv = 0
-		local fn = function(f)
-			if f then dv = f/srate end
+		local v, dv = 0, 0
+		local fn = function(cmd, val)
+			if cmd == "f" then
+				dv = val/srate
+			end
 			v = v + dv
 			if v > 1 then v = v - 1 end
 			return v
 		end
-		fn(freq)
+		fn("f", freq)
 		return fn
 	end,
 
@@ -273,6 +275,40 @@ return {
 			return out1, out2
 		end
 
+	end,
+
+	-- Make polyphonic synth. Takes sound generator function, and 
+	-- returns an instrument function and dsp function
+
+	poly = function(fn_gen)
+
+		local vs = {}
+
+		local fn_note = function(onoff, note, vel)
+			local f = 440 * math.pow(2, (note-57) / 12)
+			local v = vel / 127
+
+			if onoff then
+				vs[note] = fn_gen(f, v)
+			else
+				vs[note]("stop")
+			end
+		end
+
+		local fn_dsp = function()
+			local o = 0
+			for note, v in pairs(vs) do
+				local p = v()
+				if p then
+					o = o + p * 0.1
+				else
+					vs[note] = nil
+				end
+			end
+			return o
+		end
+
+		return fn_note, fn_dsp
 	end,
 
 }

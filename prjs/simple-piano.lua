@@ -14,9 +14,6 @@ jack:midi("midi", function(channel, t, d1, d2)
 		if t == "noteoff" then 
 			synth:note(false, channel, d1, d2 / 127) 
 		end
-		if t == "cc" and d1 == 1 then
-			f("f0", math.exp(d2 / 127 * 10))
-		end
 	end
 end)
 

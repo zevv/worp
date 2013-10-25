@@ -5,59 +5,50 @@
 
 jack = Jack.new("worp")
 
+-- Voice generator, return dsp output function
 
--- Voice generator, return a function to start, stop and generate sound.
+function voice(f, v)
 
-function voice()
-
-	local osc1 = Dsp.saw(100)
-	local osc2 = Dsp.saw(100)
+	local osc1 = Dsp.saw(f * 0.505)
+	local osc2 = Dsp.saw(f)
 	local lfo = Dsp.osc(8)
 	local filt1 = Dsp.filter("lp", 100, 2)
 	local adsr = Dsp.adsr(0.1, 0.1, 0.6, 2)
 	local adsr2 = Dsp.adsr(1.9, 0.1, 0.6, 1)
-	local vel = 0
+	local vel = v
 
-	return function(cmd, f, v)
-		if cmd == "noteon" then
-			osc1(f * 0.505)
-			osc2(f * 1.000)
-			vel = v
-			adsr(true)
-			adsr2(true)
-			return
-		elseif cmd == "noteoff" then
+	adsr(true)
+	adsr2(true)
+
+	return function(cmd)
+
+		if cmd == "stop" then
 			adsr(false)
 			adsr2(false)
 			return
-		else
-			local a = adsr()
-			filt1("f0", (adsr2() + lfo() * 0.05) * 1000 + 100)
-			if a > 0 then
-				return filt1(osc1() + osc2()) * a * vel
-			end
+		end
+
+		local a = adsr()
+		filt1("f0", (adsr2() + lfo() * 0.05) * 1000 + 100)
+		if a > 0 then
+			return filt1(osc1() + osc2()) * a * vel
 		end
 	end
 end
 
 
+instr, dsp = Dsp.poly(voice)
+
+
 -- Handle midi note on and off messages. Generate new voices for new notes and
 -- start/stop ADSR's
 
-vs = {}
-
 jack:midi("midi", function(channel, t, d1, d2)
-	if channel == 1 then
-		if t == "noteon" then 
-			local f = 440 * math.pow(2, (d1-57) / 12)
-			vel = d2 / 127
-			local v = voice()
-			v("noteon", f, vel)
-			vs[d1] = v
-		end
-		if t == "noteoff" then 
-			vs[d1]("noteoff")
-		end
+	if t == "noteon" then 
+		instr(true, d1, d2)
+	end
+	if t == "noteoff" then 
+		instr(false, d1, d2)
 	end
 end)
 
@@ -65,22 +56,8 @@ end)
 -- Add up the output of all running voices. Voices that are done playing are
 -- removed from the list
 
-rev = Dsp.reverb(0.5, 0.5, 0.9, 0.6)
-
-jack:dsp("synth", 0, 2, function(t)
-	local o = 0
-	for note, v in pairs(vs) do
-		local p = v()
-		if p then
-			o = o + p * 0.1
-		else
-			vs[note] = nil
-		end
-	end
-	return rev(o)
-end)
-
-jack:connect("worp", "system")
+jack:dsp("synth", 0, 1, dsp)
+jack:connect("worp")
 
 -- vi: ft=lua ts=3 sw=3
 

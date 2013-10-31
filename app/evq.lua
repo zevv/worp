@@ -12,7 +12,6 @@ local running = true
 --
 
 function at(t, fn, ...)
-	print(t_now, t)
 	local ev = {
 		t_when = t_now + t,
 		fn = fn,

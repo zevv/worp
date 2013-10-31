@@ -38,6 +38,7 @@ function sandbox_init()
 	env.stop = stop
 	env.play = play
 	env.time = time
+	env.setmetatable = setmetatable
 	env.require = require
 
 	env.Chord = require "chord"
@@ -47,6 +48,7 @@ function sandbox_init()
 	env.Dsp = require "dsp"
 	env.Chord = require "chord"
 	env.Metro = require "metro"
+	env.Gui = require "gui"
 
 	-- setmetatable(env, { __index = function(_, s) print(s) return _G[s] end})
 	

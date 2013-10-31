@@ -1,8 +1,43 @@
 
+local Dsp = {}
+
 srate = 44100
 
 
-local function delay(_, t)
+
+function Dsp:mkgen(t, init)
+
+	local gen = {}
+
+	setmetatable(gen, {
+		__call = function(_, ...)
+			return t.fn_gen(gen, ...)
+		end,
+		__index = {
+			set = function(_, vs)
+				for k, v in pairs(vs) do gen[k] = v end
+				return t.fn_set(gen)
+			end,
+			info = function()
+				return t
+			end,
+			get = function()
+				return gen
+			end
+		}
+	})
+
+	init = init or {}
+	for _, arg in ipairs(t.args) do
+		gen[arg.name] = init[arg.name] or arg.default
+	end
+
+	gen:set(arg)
+
+	return gen
+end
+
+function Dsp:delay(t)
 	local s = t * 44100
 	local head = 1
 	local buf = {}
@@ -13,184 +48,302 @@ local function delay(_, t)
 	end
 end
 
+				
+-- http://www.taygeta.com/random/gaussian.html
 
-local function noise(_)
-	return math.random
+function Dsp:noise(init)
+
+	local random, sqrt, log = math.random, math.sqrt, math.log
+	local type, y1, y2
+	
+	local function rand()
+		return 2 * random() - 1
+	end
+	
+	return Dsp:mkgen({
+		name = "noise",
+		description = "Noise generator",
+		args = {
+			{
+				name = "type",
+				description = "Noise type",
+				range = "uniform,gaussian",
+				default = "uniform",
+			},
+		},
+
+		fn_gen = function()
+
+			if type == "uniform" then
+				return rand()
+			end
+		
+			if type == "gaussian" then
+
+				local x1, x2, w
+				repeat
+					x1, x2 = rand(), rand()
+					w = x1 * x1 + x2 * x2
+				until w < 1
+				w = sqrt((-2 * log(w)) / w)
+				y1 = x1 * w
+				y2 = x2 * w
+				return y1
+			end
+		end,
+
+		fn_set = function(arg)
+			type = arg.type
+		end,
+	}, init)
+
 end
 
 
-local function diode(_)
+function Dsp:diode(_)
 	return function(v)
 		return v > 0 and v or -v
 	end
 end
 
 
-local function osc(_, freq)
-	local cos = math.cos
+function Dsp:osc(init)
+
+	local sin = math.sin
 	local i, di = 0, 0
-	local fn = function(cmd, v)
-		if cmd == "f" then
-			di = math.pi * 2 * v/srate 
-			return
+
+	return Dsp:mkgen({
+		name = "osc",
+		description = "Sine oscillator",
+		args = {
+			{
+				name = "f",
+				description = "Frequency",
+				range = "0..20000",
+				unit = "Hz",
+				default = 440,
+			},
+		},
+		fn_set = function(arg)
+			di = arg.f * math.pi * 2 / srate 
+		end,
+		fn_gen = function()
+			i = i + di
+			return sin(i)
 		end
-		i = i + di
-		return cos(i)
-	end
-	fn(freq)
-	return fn
+	}, init)
 end
 
 
-local function saw(_, freq)
+function Dsp:saw(init)
+
 	local v, dv = 0, 0
-	local fn = function(cmd, val)
-		if cmd == "f" then
-			dv = 2*val/srate
+
+	return Dsp:mkgen({
+		name = "saw",
+		description = "Saw tooth oscillator",
+		args = {
+			{
+				name = "f",
+				description = "Frequency",
+				range = "0..20000",
+				unit = "Hz",
+				default = 440,
+			},
+		},
+		fn_set = function(arg)
+			dv = 2 * arg.f / srate
+		end,
+		fn_gen = function()
+			v = v + dv
+			if v > 1 then v = v - 2 end
+			return v
 		end
-		v = v + dv
-		if v > 1 then v = v - 2 end
-		return v
-	end
-	fn("f", freq)
-	return fn
+	}, init)
+
 end
 
 
-local function triangle(_, freq)
-	local s = saw(_, freq)
-	local d = diode()
-	return function(cmd, val)
-		return d(s(cmd, val)) * 2 - 1
-	end
-end
 
+function Dsp:adsr(init)
 
-local function adsr(_, a, d, s,r)
-	local state, v, dv = 'a', 0, 1/(srate*a)
-	return function(onoff)
-		if onoff == true then
-			state, dv = 'a', 1/(srate*a)
-		elseif onoff == false then
-			state, dv = 'r', -s/(srate*r)
-		elseif state == 'a' and v >= 1 then
-			state, dv = 'd', -(1-s)/(srate*d)
-		elseif state == 'd' and v <= s then
-			state, dv = 's', 0
-		elseif state == 'r' and v <= 0 then
-			state, dv = nil, 0
+	local arg = {
+		A = 0,
+		D = 0,
+		S = 1,
+		R = 0,
+		on = true,
+	}
+
+	local state, v = nil, 0
+	local dv_A, dv_D, dv_R = 0, 0, 0
+	local dv = {}
+
+	return Dsp:mkgen({
+		name = "adsr",
+		description = "ADSR envelope generator",
+		args = {
+			{
+				name = "on",
+				description = "State",
+				range = "true,false",
+				default = "true",
+			}, {
+				name = "A",
+				description = "Attack",
+				range = "0..10",
+				unit = "sec",
+				default = "0",
+			}, {
+				name = "D",
+				description = "Decay",
+				range = "0..10",
+				unit = "sec",
+				default = "0",
+			}, {
+				name = "S",
+				description = "Sustain",
+				range = "0..1",
+				default = "1",
+			}, {
+				name = "R",
+				description = "Release",
+				range = "0..10",
+				unit = "sec",
+				default = "0",
+			}, 
+		},
+		fn_gen = function(arg)
+			if arg.on then
+				if state == nil then
+					state, dv = "A", dv_A
+				elseif state == "A" and v >= 1 then
+					state, dv = "D", dv_D
+				elseif state == "D" and v < arg.S then
+					state, dv = "S", 0
+				end
+			else
+				if state == "R" and v <= 0 then
+					state, dv = "done", 0
+				else
+					state, dv = "R", dv_R
+				end
+			end
+			v = v + dv
+			v = math.max(v, 0)
+			v = math.min(v, 1)
+			return v
+		end,
+
+		fn_set = function(arg)
+			dv_A =  1/(srate * arg.A)
+			dv_D = -1/(srate * arg.D)
+			dv_R = -1/(srate * arg.R)
 		end
-		v = v + dv
-		v = math.max(v, 0)
-		v = math.min(v, 1)
-		return v
-	end
+	}, init)
 end
+
 
 		
 -- Biquads, based on http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
 
-local function filter(_, ft, f0, Q, gain)
-
+function Dsp:filter(init)
+	
 	local fs = 44100
-	local ft = ft or "lp"
-	local f0 = f0 or 1000
-	local gain = gain or 0
-	local Q = Q or 1
 	local a0, a1, a2, b0, b1, b2
 	local x0, x1, x2 = 0, 0, 0
 	local y0, y1, y2 = 0, 0, 0
 
-	local function calc()
+	return Dsp:mkgen({
+		name = "filter",
+		description = "Biquad multi-mode filter",
+		args = {
+			{
+				name = "type",
+				description = "Filter type",
+				range = "lp,hp,bp,bs,ls,hs,eq",
+				default = "lp",
+			}, {
+				name = "f",
+				description = "Frequency",
+				range = "0..20000",
+				unit = "Hz",
+				default = 440,
+			}, {
+				name = "Q",
+				description = "Resonance",
+				range = "0..100",
+				default = 1,
+			}, {
+				name = "gain",
+				description = "Shelf filter gain",
+				range = "-60..60",
+				unit = "dB",
+				default = 0
+			}
+		},
 
-		local w0 = 2 * math.pi * (f0 / fs)
-		local alpha = math.sin(w0) / (2*Q)
-		local cos_w0 = math.cos(w0)
-		local A = math.pow(10, gain/40)
+		fn_set = function(gen)
+			local w0 = 2 * math.pi * (gen.f / fs)
+			local alpha = math.sin(w0) / (2*gen.Q)
+			local cos_w0 = math.cos(w0)
+			local A = math.pow(10, gen.gain/40)
 
-		-- High pass
-		
-		if ft == "hp" then
-			b0, b1, b2 = (1 + cos_w0)/2, -(1 + cos_w0), (1 + cos_w0)/2
-			a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+			if gen.type == "hp" then
+				b0, b1, b2 = (1 + cos_w0)/2, -(1 + cos_w0), (1 + cos_w0)/2
+				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
-		-- Low pass
+			elseif gen.type == "lp" then
+				b0, b1, b2 = (1 - cos_w0)/2, 1 - cos_w0, (1 - cos_w0)/2
+				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
-		elseif ft == "lp" then
-			b0, b1, b2 = (1 - cos_w0)/2, 1 - cos_w0, (1 - cos_w0)/2
-			a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+			elseif gen.type == "bp" then
+				b0, b1, b2 = Q*alpha, 0, -Q*alpha
+				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
-		-- Band pass
+			elseif gen.type == "bs" then
+				b0, b1, b2 = 1, -2*cos_w0, 1
+				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
-		elseif ft == "bp" then
-			b0, b1, b2 = Q*alpha, 0, -Q*alpha
-			a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+			elseif gen.type == "ls" then
+				local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
+				local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
+				b0, b1, b2 = A*( ap1 - am1_cos_w0 + tsAa ), 2*A*( am1 - ap1_cos_w0 ), A*( ap1 - am1_cos_w0 - tsAa )
+				a0, a1, a2 = ap1 + am1_cos_w0 + tsAa, -2*( am1 + ap1_cos_w0 ), ap1 + am1_cos_w0 - tsAa
 
-		-- Band stop
+			elseif gen.type == "hs" then
+				local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
+				local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
+				b0, b1, b2 = A*( ap1 + am1_cos_w0 + tsAa ), -2*A*( am1 + ap1_cos_w0 ), A*( ap1 + am1_cos_w0 - tsAa )
+				a0, a1, a2 = ap1 - am1_cos_w0 + tsAa, 2*( am1 - ap1_cos_w0 ), ap1 - am1_cos_w0 - tsAa
 
-		elseif ft == "bs" then
-			b0, b1, b2 = 1, -2*cos_w0, 1
-			a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+			elseif gen.type == "eq" then
+				b0, b1, b2 = 1 + alpha*A, -2*cos_w0, 1 - alpha*A
+				a0, a1, a2 = 1 + alpha/A, -2*cos_w0, 1 - alpha/A
 
-		-- Low shelf
+			elseif gen.type == "ap" then
+				b0, b1, b2 = 1 - alpha, -2*cos_w0, 1 + alpha
+				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
-		elseif ft == "ls" then
-			local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
-			local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
-			b0, b1, b2 = A*( ap1 - am1_cos_w0 + tsAa ), 2*A*( am1 - ap1_cos_w0 ), A*( ap1 - am1_cos_w0 - tsAa )
-			a0, a1, a2 = ap1 + am1_cos_w0 + tsAa, -2*( am1 + ap1_cos_w0 ), ap1 + am1_cos_w0 - tsAa
+			else
+				error("Unsupported filter type " .. type)
+			end
+		end,
 
-		-- High shelf
-
-		elseif ft == "hs" then
-			local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
-			local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
-			b0, b1, b2 = A*( ap1 + am1_cos_w0 + tsAa ), -2*A*( am1 + ap1_cos_w0 ), A*( ap1 + am1_cos_w0 - tsAa )
-			a0, a1, a2 = ap1 - am1_cos_w0 + tsAa, 2*( am1 - ap1_cos_w0 ), ap1 - am1_cos_w0 - tsAa
-
-		-- Peaking EQ
-
-		elseif ft == "eq" then
-			b0, b1, b2 = 1 + alpha*A, -2*cos_w0, 1 - alpha*A
-			a0, a1, a2 = 1 + alpha/A, -2*cos_w0, 1 - alpha/A
-
-		-- All pass
-
-		elseif ft == "ap" then
-			b0, b1, b2 = 1 - alpha, -2*cos_w0, 1 + alpha
-			a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
-
-		else
-			error("Unsupported filter type " .. ft)
+		fn_gen = function(arg, x0)
+			y2, y1 = y1, y0
+			y0 = (b0 / a0) * x0 + (b1 / a0) * x1 + (b2 / a0) * x2 - (a1 / a0) * y1 - (a2 / a0) * y2
+			x2, x1 = x1, x0
+			return y0
 		end
-	end
-
-	calc()
-
-	return function(x0, arg)
-
-		if type(x0) == "string" then
-			if x0 == "ft" then ft = arg end
-			if x0 == "f0" then f0 = arg end
-			if x0 == "Q" then Q = arg end
-			if x0 == "gain" then gain = arg end
-			return calc()
-		end
-
-		y2, y1 = y1, y0
-		y0 = (b0 / a0) * x0 + (b1 / a0) * x1 + (b2 / a0) * x2 - (a1 / a0) * y1 - (a2 / a0) * y2
-		x2, x1 = x1, x0
-
-		return y0
-
-	end
+	}, init)
 
 end
 
 		
 -- based on Jezar's public domain C++ sources,
 
-local function reverb(_, wet, dry, room, damp)
+function Dsp:reverb(wet, dry, room, damp)
 
 	local function allpass(bufsize)
 		local buffer = {}
@@ -298,7 +451,7 @@ end
 -- returns an instrument function and dsp function
 --
 
-local function poly(_, fn_gen, max)
+function Dsp:poly(fn_gen, max)
 
 	local vs = {}
 	local nvs = 0
@@ -351,16 +504,6 @@ end
 
 
 
-return {
-	delay = delay,
-	noise = noise,
-	osc = osc,
-	saw = saw,
-	triangle = triangle,
-	adsr = adsr,
-	filter = filter,
-	reverb = reverb,
-	poly = poly,
-}
+return Dsp
 
 -- vi: ft=lua ts=3 sw=3

@@ -89,7 +89,7 @@ function dump(obj, maxdepth)
 			fd:write(obj and "true" or "false")
 		elseif(type(obj) == "function") then
 			local i = debug.getinfo(obj)
-			fd:write("function(%s:%s) %s" % { i.short_src, i.linedefined, sys.topointer(obj)})
+			fd:write("function(%s:%s)" % { i.short_src, i.linedefined })
 		else
 			fd:write("(%s)" % type(obj))
 		end
@@ -103,5 +103,37 @@ function dump(obj, maxdepth)
 	_dumpf(obj, 0)
 end
 
+
+--
+-- Serialize lua data to string
+--
+
+function serialize(o)
+	local t = type(o)
+	if t == "string" then
+		return string.format("%q", o) 
+	elseif t == "boolean" then
+		return tostring(o)
+	elseif t == "number" then
+		return tostring(o) 
+	elseif t == "nil" then
+		return "nil"
+	elseif t == "table" then
+		local out = {}
+		local done = {}
+		for i, c in ipairs(o) do
+			table.insert(out, serialize(c))
+			done[i] = true
+		end
+		for k, c in pairs(o) do
+			if not done[k] then
+				if type(k) ~= "table" then
+					table.insert(out, "[" .. serialize(k) .. "]=" .. serialize(c))
+				end
+			end
+		end
+		return "{" .. table.concat(out, ",") .. "}"
+	end
+end
 
 -- vi: ft=lua ts=3 sw=3

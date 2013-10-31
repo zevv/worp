@@ -7,7 +7,7 @@ package.cpath = package.cpath .. ";./lib/?.so;./app/?.so"
 -- Application libraries
 --
 
-P = require "posix"
+P = require "luaposix"
 
 require "app.strict"
 require "app.log"

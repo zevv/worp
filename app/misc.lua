@@ -116,8 +116,6 @@ function serialize(o)
 		return tostring(o)
 	elseif t == "number" then
 		return tostring(o) 
-	elseif t == "nil" then
-		return "nil"
 	elseif t == "table" then
 		local out = {}
 		local done = {}
@@ -133,6 +131,8 @@ function serialize(o)
 			end
 		end
 		return "{" .. table.concat(out, ",") .. "}"
+	else
+		return "nil"
 	end
 end
 

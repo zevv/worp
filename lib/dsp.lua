@@ -120,6 +120,7 @@ function Dsp:osc(init)
 				name = "f",
 				description = "Frequency",
 				range = "0..20000",
+				log = true,
 				unit = "Hz",
 				default = 440,
 			},
@@ -147,6 +148,7 @@ function Dsp:saw(init)
 				name = "f",
 				description = "Frequency",
 				range = "0..20000",
+				log = true,
 				unit = "Hz",
 				default = 440,
 			},
@@ -267,12 +269,13 @@ function Dsp:filter(init)
 				name = "f",
 				description = "Frequency",
 				range = "0..20000",
+				log = true,
 				unit = "Hz",
 				default = 440,
 			}, {
 				name = "Q",
 				description = "Resonance",
-				range = "0..100",
+				range = "0.1..100",
 				default = 1,
 			}, {
 				name = "gain",
@@ -298,7 +301,7 @@ function Dsp:filter(init)
 				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
 			elseif gen.type == "bp" then
-				b0, b1, b2 = Q*alpha, 0, -Q*alpha
+				b0, b1, b2 = gen.Q*alpha, 0, -gen.Q*alpha
 				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
 			elseif gen.type == "bs" then
@@ -343,7 +346,7 @@ end
 		
 -- based on Jezar's public domain C++ sources,
 
-function Dsp:reverb(wet, dry, room, damp)
+function Dsp:reverb(init)
 
 	local function allpass(bufsize)
 		local buffer = {}
@@ -358,7 +361,7 @@ function Dsp:reverb(wet, dry, room, damp)
 		end
 	end
 
-	local function comb(bufsize, feedback, damp)
+	local function fcomb(bufsize, feedback, damp)
 		local buffer = {}
 		local bufidx = 0
 		local damp1 = damp
@@ -379,69 +382,102 @@ function Dsp:reverb(wet, dry, room, damp)
 	local scaledamp = 0.4
 	local scaleroom = 0.28
 	local offsetroom = 0.7
-	local initialroom = room or 0.5
-	local initialdamp = damp or 0.5
-	local initialwet = (wet or 1)/scalewet
-	local initialdry = dry or 0
-	local initialwidth = 2
-	local initialmode = 0
-	local stereospread = 23
 
-	local wet = initialwet * scalewet
-	local roomsize = (initialroom*scaleroom) + offsetroom
-	local dry = initialdry * scaledry
-	local damp = initialdamp * scaledamp
-	local width = initialwidth
-	local mode = initialmode
+	local comb, allp
+	local gain
+	local dry, wet1, wet2
 
-	local wet1 = wet*(width/2 + 0.5)
-	local wet2 = wet*((1-width)/2)
+	return Dsp:mkgen({
+		name = "reverb",
+		description = "Freeverb reverb",
+		args = {
+			{
+				name = "wet",
+				description = "Wet volume",
+				range = "0..1",
+				default = "0.5",
+			}, {
+				name = "dry",
+				description = "Dry volume",
+				range = "0..1",
+				default = "0.5",
+			}, {
+				name = "room",
+				description = "Room size",
+				range = "0..1.1",
+				default = "0.5",
+			}, {
+				name = "damp",
+				description = "Damping",
+				range = "0..1",
+				default = "0.5",
+			}
+		},
+		fn_set = function(arg)
+			local initialroom = arg.room 
+			local initialdamp = arg.damp 
+			local initialwet = arg.wet/scalewet
+			local initialdry = arg.dry or 0
+			local initialwidth = 2
+			local initialmode = 0
+			local stereospread = 23
 
-	local roomsize1 = roomsize
-	local damp1 = damp
-	local gain = fixedgain
+			local wet = initialwet * scalewet
+			local roomsize = (initialroom*scaleroom) + offsetroom
+			dry = initialdry * scaledry
+			local damp = initialdamp * scaledamp
+			local width = initialwidth
+			local mode = initialmode
 
-	local comb, allp = { 
-		{
-			comb(1116, roomsize1, damp1), comb(1188, roomsize1, damp1), 
-			comb(1277, roomsize1, damp1), comb(1356, roomsize1, damp1),
-			comb(1422, roomsize1, damp1), comb(1491, roomsize1, damp1), 
-			comb(1557, roomsize1, damp1), comb(1617, roomsize1, damp1),
-		}, {
-			comb(1116+stereospread, roomsize1, damp1), comb(1188+stereospread, roomsize1, damp1),
-			comb(1277+stereospread, roomsize1, damp1), comb(1356+stereospread, roomsize1, damp1),
-			comb(1422+stereospread, roomsize1, damp1), comb(1491+stereospread, roomsize1, damp1),
-			comb(1557+stereospread, roomsize1, damp1), comb(1617+stereospread, roomsize1, damp1),
-		}
-	}, {
-		{ 
-			allpass(556), allpass(441), allpass(341), allpass(225), 
-		}, { 
-			allpass(556+stereospread), allpass(441+stereospread), 
-			allpass(341+stereospread), allpass(225+stereospread), 
-		}
-	}
+			wet1 = wet*(width/2 + 0.5)
+			wet2 = wet*((1-width)/2)
 
-	return function(in1, in2)
-		in2 = in2 or in1
-		local input = (in1 + in2) * gain
-		
-		local out = { 0, 0 }
+			local roomsize1 = roomsize
+			local damp1 = damp
+			gain = fixedgain
 
-		for c = 1, 2 do
-			for i = 1, #comb[c] do
-				out[c] = out[c] + comb[c][i](input)
+			comb, allp = { 
+				{
+					fcomb(1116, roomsize1, damp1), fcomb(1188, roomsize1, damp1), 
+					fcomb(1277, roomsize1, damp1), fcomb(1356, roomsize1, damp1),
+					fcomb(1422, roomsize1, damp1), fcomb(1491, roomsize1, damp1), 
+					fcomb(1557, roomsize1, damp1), fcomb(1617, roomsize1, damp1),
+				}, {
+					fcomb(1116+stereospread, roomsize1, damp1), fcomb(1188+stereospread, roomsize1, damp1),
+					fcomb(1277+stereospread, roomsize1, damp1), fcomb(1356+stereospread, roomsize1, damp1),
+					fcomb(1422+stereospread, roomsize1, damp1), fcomb(1491+stereospread, roomsize1, damp1),
+					fcomb(1557+stereospread, roomsize1, damp1), fcomb(1617+stereospread, roomsize1, damp1),
+				}
+			}, {
+				{ 
+					allpass(556), allpass(441), allpass(341), allpass(225), 
+				}, { 
+					allpass(556+stereospread), allpass(441+stereospread), 
+					allpass(341+stereospread), allpass(225+stereospread), 
+				}
+			}
+		end,
+		fn_gen = function(gen, in1, in2)
+			in2 = in2 or in1
+			local input = (in1 + in2) * gain
+			
+			local out = { 0, 0 }
+
+			for c = 1, 2 do
+				for i = 1, #comb[c] do
+					out[c] = out[c] + comb[c][i](input)
+				end
+				for i = 1, #allp[c] do
+					out[c] = allp[c][i](out[c])
+				end
 			end
-			for i = 1, #allp[c] do
-				out[c] = allp[c][i](out[c])
-			end
+
+			local out1 = out[1]*wet1 + out[2]*wet2 + in1*dry
+			local out2 = out[2]*wet1 + out[1]*wet2 + in2*dry
+
+			return out1, out2
 		end
-
-		local out1 = out[1]*wet1 + out[2]*wet2 + in1*dry
-		local out2 = out[2]*wet1 + out[1]*wet2 + in2*dry
-
-		return out1, out2
-	end
+	}, init)
 
 end
 

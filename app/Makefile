@@ -1,5 +1,5 @@
 
-all: posix.so
+all: luaposix.so
 
 LDFLAGS += -lrt -lcrypt
 

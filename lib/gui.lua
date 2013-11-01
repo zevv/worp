@@ -20,7 +20,7 @@ local cmd_handler = {
 
 		local window = Gtk.Window {
 			title = info.description,
-			resizable = false,
+			--resizable = false,
 			width = 400,
 			Gtk.Box {
 				border_width = 4,

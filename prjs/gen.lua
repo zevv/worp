@@ -12,13 +12,15 @@ f = Dsp:filter()
 lfo = Dsp:osc { f = 5 }
 rev = Dsp:reverb()
 
+n = Dsp:noise()
+
 Gui:add(f)
 Gui:add(o)
 Gui:add(lfo)
 Gui:add(rev)
 
 jack:dsp("synth", 0, 2, function(t_, i1)
-	local v = f(o()) * lfo() * 0.3
+	local v = f(o() * (1+n()*0.3)) * lfo() * 0.1
 	return rev(v, v)
 end)
 

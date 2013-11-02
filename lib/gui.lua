@@ -90,12 +90,7 @@ local cmd_handler = {
 			}
 		}
 
-		local type = "number"
-		if control.range:find(",") then type = "enum" end
-
-		local id = "%s-%s-%s" % { data.gui_id, data.group_id, control.id }
-
-		if type == "number" then
+		if control.type == "number" then
 		
 			local min, max = control.range:match("(.+)%.%.(.+)")
 			min = tonumber(min) or 0
@@ -124,7 +119,6 @@ local cmd_handler = {
 				if not mute then
 					worker:tx { cmd = "set", data = {
 						uid = data.uid,
-						control_id = control.id,
 						value = val,
 					}}
 				end
@@ -267,13 +261,20 @@ local function group_add_control(group, control, uid, fn_set)
 		control = control,
 		uid = uid,
 	}}
-	
-	if control.default then
+
+	local function set(val)
 		group.gui.Gui:tx { cmd = "set_control", data = { 
 			gui_id = group.gui.gui_id, 
 			group_id = group.id, 
 			control_id = control.id,
-			value = control.default}}
+			value = val
+		}}
+	end
+	
+	control:on_set(set)
+
+	if control.value then
+		set(control.value)
 	end
 
 	--group.gui.fn_set[id] = fn_set
@@ -315,7 +316,7 @@ local function gui_start(Gui)
 	end
 	P.close(s2)
 	Gui.s = s1
-	Gui.uid_to_gen = {}
+	Gui.uid_to_control = {}
 
 	watch_fd(s1, function()
 		local code = P.recv(s1, 65535)
@@ -324,9 +325,9 @@ local function gui_start(Gui)
 			local ok, msg = safecall(fn)
 			if ok then
 				if msg.cmd == "set" then
-					local gen = Gui.uid_to_gen[msg.data.uid]
-					if gen then
-						gen:set { [msg.data.control_id] = msg.data.value }
+					local control = Gui.uid_to_control[msg.data.uid]
+					if control then
+						control:set(msg.data.value)
 					end
 				end
 			else
@@ -345,12 +346,11 @@ end
 
 local function gui_add_gen(gui, gen)
 
-	local uid = "%08x" % math.random(0, 0xffffffff)
-	gui.Gui.uid_to_gen[uid] = gen
-
 	local info = gen:info()
 	local group = gui:add_group(info.description)
 	for _, control in ipairs(info.controls) do
+		local uid = "%08x" % math.random(0, 0xffffffff)
+		gui.Gui.uid_to_control[uid] = control
 		group:add_control(control, uid, function(v)
 			gen:set { [control.id] = v }
 		end)

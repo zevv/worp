@@ -18,12 +18,12 @@ gui = Gui:new("Worp")
 
 n = Dsp:noise()
 
+
 local function map_control(midi, ccnr, gen, id)
 
+	local control = gen:control(id)
 	local info = gen:info()
-	local control = info.controls[id]
 
-	dump(control)
 	if not control then return end
 	local min, max = control.range:match("(.+)%.%.(.+)")
 
@@ -32,12 +32,12 @@ local function map_control(midi, ccnr, gen, id)
 		if control.log then
 			val = (max+1) ^ (val/max) - 1
 		end
-		print(val)
-		gen:set(id, val)
+		control:set(val)
 	end)
 end
 
 map_control(midi, 1, f, "f")
+map_control(midi, 2, f, "Q")
 
 gui:add_gen(f)
 gui:add_gen(o)

@@ -4,59 +4,81 @@ local Dsp = {}
 srate = 44100
 
 
+function Dsp:mkgen(info, init)
 
-function Dsp:mkgen(t, init)
-
+	local i2c = {}
 	local gen = {}
 	local set_cb = {}
 
-	local controls = t.controls
+	local controls = info.controls
 	controls.fn_set = controls.fn_set or function() end
 
 	for _, control in ipairs(controls) do
-		controls[control.id] = control
-		control.fn_set = control.fn_set or function() end
-	end
 
-	local function control_set(id, value)
-		local control = controls[id]
-		control.fn_set(value)
-		for fn in pairs(set_cb[id] or {}) do
-			fn(value)
-		end
+		control.fn_set = control.fn_set or function() end
+		control.type = control.type or "number"
+		control.gen = gen
+
+		local meta
+		meta = {
+			cb_set = {},
+			__index = {
+				set = function(control, value, update)
+					control.value = value
+					control.fn_set(value)
+					for fn in pairs(meta.cb_set) do
+					  fn(value)
+					end
+					if update ~= false then
+						gen:update()
+					end
+				end,
+				on_set = function(control, fn)
+					meta.cb_set[fn] = true
+				end,
+				info = function(control)
+					return control
+				end,
+			}
+		}
+		
+		setmetatable(control, meta)
+		i2c[control.id] = control
 	end
 
 	setmetatable(gen, {
 		__call = function(_, ...)
-			return t.fn_gen(gen, ...)
+			return info.fn_gen(gen, ...)
 		end,
 		__index = {
+			update = function()
+				controls.fn_set()
+			end,
 			set = function(_, id, value)
 				if type(id) == "table" then
 					for id, value in pairs(id) do
-						control_set(id, value)
+						i2c[id]:set(value, false)
 					end
+					gen:update()
 				else
-					control_set(id, value)
+					i2c[id]:set(value)
 				end
-				controls.fn_set()
-			end,
-			on_set = function(_, id, fn)
-				set_cb[id] = set_cb[id] or {}
-				set_cb[id][fn] = true
 			end,
 			info = function()
-				return t
+				return info
 			end,
 			get = function()
 				return gen
+			end,
+			control = function(_, id)
+				return i2c[id]
 			end
 		}
 	})
 
 	local init = init or {}
 	local val = {}
-	for _, arg in ipairs(t.controls) do
+	for _, arg in ipairs(info.controls) do
 		val[arg.id] = init[arg.id] or arg.default
 	end
 
@@ -64,6 +86,7 @@ function Dsp:mkgen(t, init)
 
 	return gen
 end
+
 
 function Dsp:delay(t)
 	local s = t * 44100
@@ -347,6 +370,7 @@ function Dsp:filter(init)
 				id = "type",
 				description = "Filter type",
 				range = "lp,hp,bp,bs,ls,hs,eq",
+				type = "enum",
 				default = "lp",
 				fn_set = function(val) type = val end
 			}, {

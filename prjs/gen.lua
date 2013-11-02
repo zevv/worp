@@ -32,10 +32,10 @@ local function map_control(midi, ccnr, gen, id)
 	end)
 end
 
-map_control(midi, 1, f, "f")
-map_control(midi, 2, f, "Q")
+f:map_cc(midi, 1)
+--map_control(midi, 2, f, "Q")
 
-map_control(midi, 5, o, "f")
+--map_control(midi, 5, o, "f")
 
 gui:add_gen(o, "Flipje")
 gui:add_gen(f)

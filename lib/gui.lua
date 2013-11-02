@@ -92,15 +92,11 @@ local cmd_handler = {
 
 		if control.type == "number" then
 		
-			local min, max = control.range:match("(.+)%.%.(.+)")
-			min = tonumber(min) or 0
-			max = tonumber(max) or 1
-
 			local adjustment = Gtk.Adjustment {
-				lower = min,
-				upper = max,
-				step_increment = (max-min)/1000,
-				page_increment = (max-min)/10,
+				lower = control.min,
+				upper = control.max,
+				step_increment = (control.max-control.min)/1000,
+				page_increment = (control.max-control.min)/10,
 			}
 
 			local label = Gtk.Label {
@@ -112,7 +108,7 @@ local cmd_handler = {
 				local val = s.adjustment.value
 				if control.log then
 					if val < 0.001 then val = 0.001 end
-					val = (max+1) ^ (val/max) - 1
+					val = (control.max+1) ^ (val/control.max) - 1
 				end
 				val = fmt % val
 				label:set_text(val)
@@ -126,7 +122,7 @@ local cmd_handler = {
 
 			fn_set = function(val)
 				if control.log then
-					val = (max) * math.log(val+1) / math.log(max)
+					val = (control.max) * math.log(val+1) / math.log(control.max)
 				end
 				mute = true
 				adjustment:set_value(val)
@@ -157,21 +153,29 @@ local cmd_handler = {
 			}
 
 		else
-
-			local t = {}
-			for v in control.range:gmatch("[^,]+") do
-				t[#t+1] = v
-				t[v] = #t
-			end
+			local combo = Gtk.ComboBoxText {
+				on_changed = function(s)
+					worker:tx { cmd = "set", data = {
+						uid = data.uid,
+						value = s:get_active_text(),
+					}}
+				end
+			}
 
 			grid:add {
 				left_attach = 1, top_attach = y,
-				Gtk.ComboBoxText {
-					on_changed = function(s)
-					end
-				}
+				combo
 			}
 
+			for i, o in ipairs(control.options) do
+				combo:append(i-1, o)
+			end
+
+			fn_set = function(v)
+				for i, o in ipairs(control.options) do
+					if v == o then combo:set_active(i-1) end
+				end
+			end
 		end
 	
 		group.control_list[control.id] = {

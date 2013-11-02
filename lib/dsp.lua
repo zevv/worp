@@ -6,7 +6,6 @@ srate = 44100
 
 function Dsp:mkcontrol(def, gen)
 			
-	local min, max = def.range:match("(.+)%.%.(.+)")
 
 	local control = {
 
@@ -17,6 +16,9 @@ function Dsp:mkcontrol(def, gen)
 		end,
 		
 		set = function(control, value, update)
+			if control.type == "enum" and type(value) == "number" then
+				value = control.options[math.floor(value)]
+			end
 			if value then
 				control.value = value
 				for fn in pairs(control.fn_set) do
@@ -29,9 +31,9 @@ function Dsp:mkcontrol(def, gen)
 		end,
 
 		set_uni = function(control, v, update)
-			if min then
-				v = min + v * (max-min)
-				if control.log then v = (max+1) ^ (v/max) - 1 end
+			if control.min and control.max then
+				v = control.min + v * (control.max-control.min)
+				if control.log then v = (control.max+1) ^ (v/control.max) - 1 end
 				control:set(v)
 			end
 		end,
@@ -40,18 +42,30 @@ function Dsp:mkcontrol(def, gen)
 			control.fn_set[fn] = true
 		end,
 
+		map_cc = function(control, midi, nr)
+			midi:cc(nr, function(v)
+				control:set_uni(v/127)
+			end)
+		end,
+
 		-- data
 	
 		id = def.id or "",
 		description = def.description or "",
 		type = def.type or "number",
-		range = def.range,
+		min = def.min or 0,
+		max = def.max or 1,
+		options = def.options or {},
 		log = def.log,
 		unit = def.unit,
 		default = def.default,
 		value = nil,
 		fn_set = {},
 	}
+
+	if def.type == "enum" then
+		control.min, control.max = 1, #def.options
+	end
 
 	setmetatable(control, {
 		__tostring = function()
@@ -68,8 +82,48 @@ end
 
 
 function Dsp:mkgen(def, init)
-	
+
 	local gen = {
+
+		-- methods
+		
+		update = function(gen)
+			if def.controls.fn_set then
+				def.controls.fn_set()
+			end
+		end,
+
+		set = function(gen, id, value)
+			if type(id) == "table" then
+				for id, value in pairs(id) do
+					gen:control(id):set(value, false)
+				end
+				gen:update()
+			else
+				gen:control(id):set(value)
+			end
+		end,
+
+		controls = function(gen)
+			return gen.control_list
+		end,
+
+		get = function(gen)
+			return gen
+		end,
+
+		control = function(gen, id)
+			return gen.control_list[id]
+		end,
+
+		map_cc = function(gen, midi, nr)
+			for i, control in ipairs(gen:controls()) do
+				control:map_cc(midi, nr+i-1)
+			end
+		end,
+
+		-- data
+
 		id = def.id,
 		description = def.description,
 		control_list = {}
@@ -82,32 +136,6 @@ function Dsp:mkgen(def, init)
 		__call = function(_, ...)
 			return def.fn_gen(gen, ...)
 		end,
-		__index = {
-			update = function()
-				if def.controls.fn_set then
-					def.controls.fn_set()
-				end
-			end,
-			set = function(_, id, value)
-				if type(id) == "table" then
-					for id, value in pairs(id) do
-						gen:control(id):set(value, false)
-					end
-					gen:update()
-				else
-					gen:control(id):set(value)
-				end
-			end,
-			controls = function()
-				return gen.control_list
-			end,
-			get = function()
-				return gen
-			end,
-			control = function(_, id)
-				return gen.control_list[id]
-			end
-		}
 	})
 
 	for i, def in ipairs(def.controls) do
@@ -155,7 +183,8 @@ function Dsp:noise(init)
 			{
 				id = "type",
 				description = "Noise type",
-				range = "uniform,gaussian",
+				type = "enum",
+				options = "uniform,gaussian",
 				default = "uniform",
 				fn_set = function(val) type = val end
 			},
@@ -205,7 +234,7 @@ function Dsp:osc(init)
 			{
 				id = "f",
 				description = "Frequency",
-				range = "0..20000",
+				max = 20000,
 				log = true,
 				unit = "Hz",
 				default = 440,
@@ -233,7 +262,7 @@ function Dsp:saw(init)
 			{
 				id = "f",
 				description = "Frequency",
-				range = "0..20000",
+				max = 20000,
 				log = true,
 				unit = "Hz",
 				default = 440,
@@ -274,7 +303,8 @@ function Dsp:adsr(init)
 			{
 				id = "on",
 				description = "State",
-				range = "true,false",
+				type = "enum",
+				options = "true,false",
 				default = "true",
 				fn_set = function(val)
 					if val and  state == nil then
@@ -291,7 +321,7 @@ function Dsp:adsr(init)
 			}, {
 				id = "A",
 				description = "Attack",
-				range = "0..10",
+				max = 10,
 				unit = "sec",
 				default = "0",
 				fn_set = function(val)
@@ -300,7 +330,7 @@ function Dsp:adsr(init)
 			}, {
 				id = "D",
 				description = "Decay",
-				range = "0..10",
+				max = 10,
 				unit = "sec",
 				default = "0",
 				fn_set = function(val)
@@ -309,7 +339,6 @@ function Dsp:adsr(init)
 			}, {
 				id = "S",
 				description = "Sustain",
-				range = "0..1",
 				default = "1",
 				fn_set = function(val)
 					level_S = val
@@ -317,7 +346,7 @@ function Dsp:adsr(init)
 			}, {
 				id = "R",
 				description = "Release",
-				range = "0..10",
+				max = 10,
 				unit = "sec",
 				default = "0",
 				fn_set = function(val)
@@ -406,14 +435,14 @@ function Dsp:filter(init)
 			{
 				id = "type",
 				description = "Filter type",
-				range = "lp,hp,bp,bs,ls,hs,eq",
 				type = "enum",
+				options =  { "lp", "hp", "bp", "bs", "ls", "hs", "eq" },
 				default = "lp",
 				fn_set = function(val) type = val end
 			}, {
 				id = "f",
 				description = "Frequency",
-				range = "0..20000",
+				max = 20000,
 				log = true,
 				unit = "Hz",
 				default = 440,
@@ -421,13 +450,15 @@ function Dsp:filter(init)
 			}, {
 				id = "Q",
 				description = "Resonance",
-				range = "0.1..100",
+				min = 0.1,
+				max = 100,
 				default = 1,
 				fn_set = function(val) Q = val end
 			}, {
 				id = "gain",
 				description = "Shelf/EQ filter gain",
-				range = "-60..60",
+				min = -60,
+				max = 60,
 				unit = "dB",
 				default = 0,
 				fn_set = function(val) gain = val end
@@ -545,25 +576,22 @@ function Dsp:reverb(init)
 			{
 				id = "wet",
 				description = "Wet volume",
-				range = "0..1",
 				default = "0.5",
 				fn_set = function(val) arg_wet = val end
 			}, {
 				id = "dry",
 				description = "Dry volume",
-				range = "0..1",
 				default = "0.5",
 				fn_set = function(val) arg_dry = val end
 			}, {
 				id = "room",
 				description = "Room size",
-				range = "0..1.1",
+				max = 1.1,
 				default = "0.5",
 				fn_set = function(val) arg_room = val end
 			}, {
 				id = "damp",
 				description = "Damping",
-				range = "0..1",
 				default = "0.5",
 				fn_set = function(val) arg_damp = val end
 			}

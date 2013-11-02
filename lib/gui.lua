@@ -40,9 +40,8 @@ local cmd_handler = {
 	
 		local gui = worker.gui_list[data.gui_id]
 		local info = data.info
-		local setting = false
+		local mute = false
 
-		print("add group", data.id)
 		gui.window.child.box:add {
 			Gtk.Frame {
 				label = data.group_id,
@@ -79,6 +78,7 @@ local cmd_handler = {
 		group.y = group.y + 1
 
 		local control = data.control
+		local mute = false
 		local fn_set = function(v) end
 		
 		grid:add {
@@ -121,18 +121,22 @@ local cmd_handler = {
 				end
 				val = fmt % val
 				label:set_text(val)
-				worker:tx { cmd = "set", data = {
-					uid = data.uid,
-					control_id = control.id,
-					value = val,
-				}}
+				if not mute then
+					worker:tx { cmd = "set", data = {
+						uid = data.uid,
+						control_id = control.id,
+						value = val,
+					}}
+				end
 			end
 
 			fn_set = function(val)
 				if control.log then
 					val = (max) * math.log(val+1) / math.log(max)
 				end
+				mute = true
 				adjustment:set_value(val)
+				mute = false
 			end
 
 			grid:add {
@@ -346,7 +350,7 @@ local function gui_add_gen(gui, gen)
 
 	local info = gen:info()
 	local group = gui:add_group(info.description)
-	for _, control in ipairs(info.args) do
+	for _, control in ipairs(info.controls) do
 		group:add_control(control, uid, function(v)
 			gen:set { [control.id] = v }
 		end)

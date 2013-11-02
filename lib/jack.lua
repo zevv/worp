@@ -56,6 +56,26 @@ end
 
 local function jack_midi(jack, name, fn)
 
+	local midi = {
+
+		-- methods
+
+		note = function(midi, fn)
+			midi.fn_note[fn] = true
+		end,
+
+		cc = function(midi, nr, fn)
+			midi.fn_cc[nr] = midi.fn_cc[nr] or {}
+			midi.fn_cc[nr][fn] = true
+		end,
+
+		-- data
+
+		fd = jack_c.add_midi(jack.j, name),
+		fn_note = {},
+		fn_cc = {},
+	}
+
 	local midi_msg = {
 		[0x90] = "noteon",
 		[0x80] = "noteoff",
@@ -63,33 +83,27 @@ local function jack_midi(jack, name, fn)
 		[0xc0] = "pc",
 	}
 
-	local midi = jack.midi_list[name]
 
-	if not midi then
+	watch_fd(midi.fd, function()
+		local msg = P.read(midi.fd, 3)
 
-		midi = {
-			fd = jack_c.add_midi(jack.j, name),
-			fn_list = {}
-		}
+		local b1, b2, b3 = string.byte(msg, 1, #msg)
 
-		jack.midi_list[name] = midi
+		local t = bit.band(b1, 0xf0)
 
-		watch_fd(midi.fd, function()
-			local msg = P.read(midi.fd, 3)
-
-			local b1, b2, b3 = string.byte(msg, 1, #msg)
-
-			local t = bit.band(b1, 0xf0)
-			t = midi_msg[t] or t
-			local channel = bit.band(b1, 0x0f) + 1
-			for fn in pairs(midi.fn_list) do
-				fn(channel, t, b2, b3)
+		if t == 0x80 or t == 0x90 then
+			for fn in pairs(midi.fn_node) do
+				fn(t == 0x80, b2, b3)
 			end
+		elseif t == 0xb0 then
+			for fn in pairs(midi.fn_cc[b2] or {}) do
+				fn(b3)
+			end
+		end
 			
-		end)
-	end
+	end)
 
-	midi.fn_list[fn] = true
+	return midi
 
 end
 

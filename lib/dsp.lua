@@ -8,15 +8,42 @@ srate = 44100
 function Dsp:mkgen(t, init)
 
 	local gen = {}
+	local set_cb = {}
+
+	local controls = t.controls
+	controls.fn_set = controls.fn_set or function() end
+
+	for _, control in ipairs(controls) do
+		controls[control.id] = control
+		control.fn_set = control.fn_set or function() end
+	end
+
+	local function control_set(id, value)
+		local control = controls[id]
+		control.fn_set(value)
+		for fn in pairs(set_cb[id] or {}) do
+			fn(value)
+		end
+	end
 
 	setmetatable(gen, {
 		__call = function(_, ...)
 			return t.fn_gen(gen, ...)
 		end,
 		__index = {
-			set = function(_, vs)
-				for k, v in pairs(vs) do gen[k] = v end
-				return t.fn_set(gen)
+			set = function(_, id, value)
+				if type(id) == "table" then
+					for id, value in pairs(id) do
+						control_set(id, value)
+					end
+				else
+					control_set(id, value)
+				end
+				controls.fn_set()
+			end,
+			on_set = function(_, id, fn)
+				set_cb[id] = set_cb[id] or {}
+				set_cb[id][fn] = true
 			end,
 			info = function()
 				return t
@@ -27,12 +54,13 @@ function Dsp:mkgen(t, init)
 		}
 	})
 
-	init = init or {}
-	for _, arg in ipairs(t.args) do
-		gen[arg.id] = init[arg.id] or arg.default
+	local init = init or {}
+	local val = {}
+	for _, arg in ipairs(t.controls) do
+		val[arg.id] = init[arg.id] or arg.default
 	end
 
-	gen:set(arg)
+	gen:set(val)
 
 	return gen
 end
@@ -63,12 +91,13 @@ function Dsp:noise(init)
 	return Dsp:mkgen({
 		id = "noise",
 		description = "Noise generator",
-		args = {
+		controls = {
 			{
 				id = "type",
 				description = "Noise type",
 				range = "uniform,gaussian",
 				default = "uniform",
+				fn_set = function(val) type = val end
 			},
 		},
 
@@ -92,9 +121,6 @@ function Dsp:noise(init)
 			end
 		end,
 
-		fn_set = function(arg)
-			type = arg.type
-		end,
 	}, init)
 
 end
@@ -115,7 +141,7 @@ function Dsp:osc(init)
 	return Dsp:mkgen({
 		id = "osc",
 		description = "Sine oscillator",
-		args = {
+		controls = {
 			{
 				id = "f",
 				description = "Frequency",
@@ -123,11 +149,11 @@ function Dsp:osc(init)
 				log = true,
 				unit = "Hz",
 				default = 440,
+				fn_set = function(val)
+					di = val * math.pi * 2 / srate 
+				end
 			},
 		},
-		fn_set = function(arg)
-			di = arg.f * math.pi * 2 / srate 
-		end,
 		fn_gen = function()
 			i = i + di
 			return sin(i)
@@ -143,7 +169,7 @@ function Dsp:saw(init)
 	return Dsp:mkgen({
 		id = "saw",
 		description = "Saw tooth oscillator",
-		args = {
+		controls = {
 			{
 				id = "f",
 				description = "Frequency",
@@ -151,11 +177,11 @@ function Dsp:saw(init)
 				log = true,
 				unit = "Hz",
 				default = 440,
+				fn_set = function(val)
+					dv = 2 * val / srate
+				end,
 			},
 		},
-		fn_set = function(arg)
-			dv = 2 * arg.f / srate
-		end,
 		fn_gen = function()
 			v = v + dv
 			if v > 1 then v = v - 2 end
@@ -178,58 +204,72 @@ function Dsp:adsr(init)
 	}
 
 	local state, v = nil, 0
-	local dv_A, dv_D, dv_R = 0, 0, 0
+	local dv_A, dv_D, dv_R, level_S = 0, 0, 0, 1
 	local dv = {}
 
 	return Dsp:mkgen({
 		id = "adsr",
 		description = "ADSR envelope generator",
-		args = {
+		controls = {
 			{
 				id = "on",
 				description = "State",
 				range = "true,false",
 				default = "true",
+				fn_set = function(val)
+					if val and  state == nil then
+						state, dv = "A", dv_A
+					end
+					if not val then
+						if state == "R" and v <= 0 then
+							state, dv = "done", 0
+						else
+							state, dv = "R", dv_R
+						end
+					end
+				end
 			}, {
 				id = "A",
 				description = "Attack",
 				range = "0..10",
 				unit = "sec",
 				default = "0",
+				fn_set = function(val)
+					dv_A =  1/(srate * val)
+				end,
 			}, {
 				id = "D",
 				description = "Decay",
 				range = "0..10",
 				unit = "sec",
 				default = "0",
+				fn_set = function(val)
+					dv_D = -1/(srate * arg.D)
+				end,
 			}, {
 				id = "S",
 				description = "Sustain",
 				range = "0..1",
 				default = "1",
+				fn_set = function(val)
+					level_S = val
+				end
 			}, {
 				id = "R",
 				description = "Release",
 				range = "0..10",
 				unit = "sec",
 				default = "0",
+				fn_set = function(val)
+					dv_R = -1/(srate * val)
+				end
 			}, 
 		},
 		fn_gen = function(arg)
-			if arg.on then
-				if state == nil then
-					state, dv = "A", dv_A
-				elseif state == "A" and v >= 1 then
-					state, dv = "D", dv_D
-				elseif state == "D" and v < arg.S then
-					state, dv = "S", 0
-				end
-			else
-				if state == "R" and v <= 0 then
-					state, dv = "done", 0
-				else
-					state, dv = "R", dv_R
-				end
+			if state == "A" and v >= 1 then
+				state, dv = "D", dv_D
+			elseif state == "D" and v < level_S then
+				state, dv = "S", 0
 			end
 			v = v + dv
 			v = math.max(v, 0)
@@ -237,11 +277,6 @@ function Dsp:adsr(init)
 			return v
 		end,
 
-		fn_set = function(arg)
-			dv_A =  1/(srate * arg.A)
-			dv_D = -1/(srate * arg.D)
-			dv_R = -1/(srate * arg.R)
-		end
 	}, init)
 end
 
@@ -256,15 +291,64 @@ function Dsp:filter(init)
 	local x0, x1, x2 = 0, 0, 0
 	local y0, y1, y2 = 0, 0, 0
 
+	local type, f, Q, gain
+
 	return Dsp:mkgen({
 		id = "filter",
 		description = "Biquad multi-mode filter",
-		args = {
+		controls = {
+			fn_set = function()
+				local w0 = 2 * math.pi * (f / fs)
+				local alpha = math.sin(w0) / (2*Q)
+				local cos_w0 = math.cos(w0)
+				local A = math.pow(10, gain/40)
+
+				if type == "hp" then
+					b0, b1, b2 = (1 + cos_w0)/2, -(1 + cos_w0), (1 + cos_w0)/2
+					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+				elseif type == "lp" then
+					b0, b1, b2 = (1 - cos_w0)/2, 1 - cos_w0, (1 - cos_w0)/2
+					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+				elseif type == "bp" then
+					b0, b1, b2 = Q*alpha, 0, -Q*alpha
+					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+				elseif type == "bs" then
+					b0, b1, b2 = 1, -2*cos_w0, 1
+					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+				elseif type == "ls" then
+					local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
+					local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
+					b0, b1, b2 = A*( ap1 - am1_cos_w0 + tsAa ), 2*A*( am1 - ap1_cos_w0 ), A*( ap1 - am1_cos_w0 - tsAa )
+					a0, a1, a2 = ap1 + am1_cos_w0 + tsAa, -2*( am1 + ap1_cos_w0 ), ap1 + am1_cos_w0 - tsAa
+
+				elseif type == "hs" then
+					local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
+					local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
+					b0, b1, b2 = A*( ap1 + am1_cos_w0 + tsAa ), -2*A*( am1 + ap1_cos_w0 ), A*( ap1 + am1_cos_w0 - tsAa )
+					a0, a1, a2 = ap1 - am1_cos_w0 + tsAa, 2*( am1 - ap1_cos_w0 ), ap1 - am1_cos_w0 - tsAa
+
+				elseif type == "eq" then
+					b0, b1, b2 = 1 + alpha*A, -2*cos_w0, 1 - alpha*A
+					a0, a1, a2 = 1 + alpha/A, -2*cos_w0, 1 - alpha/A
+
+				elseif type == "ap" then
+					b0, b1, b2 = 1 - alpha, -2*cos_w0, 1 + alpha
+					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
+
+				else
+					error("Unsupported filter type " .. type)
+				end
+			end,
 			{
 				id = "type",
 				description = "Filter type",
 				range = "lp,hp,bp,bs,ls,hs,eq",
 				default = "lp",
+				fn_set = function(val) type = val end
 			}, {
 				id = "f",
 				description = "Frequency",
@@ -272,66 +356,22 @@ function Dsp:filter(init)
 				log = true,
 				unit = "Hz",
 				default = 440,
+				fn_set = function(val) f = val end
 			}, {
 				id = "Q",
 				description = "Resonance",
 				range = "0.1..100",
 				default = 1,
+				fn_set = function(val) Q = val end
 			}, {
 				id = "gain",
 				description = "Shelf/EQ filter gain",
 				range = "-60..60",
 				unit = "dB",
-				default = 0
+				default = 0,
+				fn_set = function(val) gain = val end
 			}
 		},
-
-		fn_set = function(gen)
-			local w0 = 2 * math.pi * (gen.f / fs)
-			local alpha = math.sin(w0) / (2*gen.Q)
-			local cos_w0 = math.cos(w0)
-			local A = math.pow(10, gen.gain/40)
-
-			if gen.type == "hp" then
-				b0, b1, b2 = (1 + cos_w0)/2, -(1 + cos_w0), (1 + cos_w0)/2
-				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
-
-			elseif gen.type == "lp" then
-				b0, b1, b2 = (1 - cos_w0)/2, 1 - cos_w0, (1 - cos_w0)/2
-				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
-
-			elseif gen.type == "bp" then
-				b0, b1, b2 = gen.Q*alpha, 0, -gen.Q*alpha
-				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
-
-			elseif gen.type == "bs" then
-				b0, b1, b2 = 1, -2*cos_w0, 1
-				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
-
-			elseif gen.type == "ls" then
-				local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
-				local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
-				b0, b1, b2 = A*( ap1 - am1_cos_w0 + tsAa ), 2*A*( am1 - ap1_cos_w0 ), A*( ap1 - am1_cos_w0 - tsAa )
-				a0, a1, a2 = ap1 + am1_cos_w0 + tsAa, -2*( am1 + ap1_cos_w0 ), ap1 + am1_cos_w0 - tsAa
-
-			elseif gen.type == "hs" then
-				local ap1, am1, tsAa = A+1, A-1, 2 * math.sqrt(A) * alpha
-				local am1_cos_w0, ap1_cos_w0 = am1 * cos_w0, ap1 * cos_w0
-				b0, b1, b2 = A*( ap1 + am1_cos_w0 + tsAa ), -2*A*( am1 + ap1_cos_w0 ), A*( ap1 + am1_cos_w0 - tsAa )
-				a0, a1, a2 = ap1 - am1_cos_w0 + tsAa, 2*( am1 - ap1_cos_w0 ), ap1 - am1_cos_w0 - tsAa
-
-			elseif gen.type == "eq" then
-				b0, b1, b2 = 1 + alpha*A, -2*cos_w0, 1 - alpha*A
-				a0, a1, a2 = 1 + alpha/A, -2*cos_w0, 1 - alpha/A
-
-			elseif gen.type == "ap" then
-				b0, b1, b2 = 1 - alpha, -2*cos_w0, 1 + alpha
-				a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
-
-			else
-				error("Unsupported filter type " .. type)
-			end
-		end,
 
 		fn_gen = function(arg, x0)
 			y2, y1 = y1, y0
@@ -411,57 +451,62 @@ function Dsp:reverb(init)
 		}
 	}
 
+	local arg_wet, arg_dry, arg_room, arg_damp
 
 	return Dsp:mkgen({
 		id = "reverb",
 		description = "Freeverb reverb",
-		args = {
+		controls = {
+			fn_set = function()
+				local initialroom = arg_room 
+				local initialdamp = arg_damp 
+				local initialwet = arg_wet/scalewet
+				local initialdry = arg_dry or 0
+				local initialwidth = 2
+				local initialmode = 0
+
+				local wet = initialwet * scalewet
+				local roomsize = (initialroom*scaleroom) + offsetroom
+				dry = initialdry * scaledry
+				local damp = initialdamp * scaledamp
+				local width = initialwidth
+				local mode = initialmode
+
+				wet1 = wet*(width/2 + 0.5)
+				wet2 = wet*((1-width)/2)
+
+				comb_fb = roomsize
+				comb_damp1 = damp
+				comb_damp2 = 1 - damp
+				gain = fixedgain
+
+			end,
 			{
 				id = "wet",
 				description = "Wet volume",
 				range = "0..1",
 				default = "0.5",
+				fn_set = function(val) arg_wet = val end
 			}, {
 				id = "dry",
 				description = "Dry volume",
 				range = "0..1",
 				default = "0.5",
+				fn_set = function(val) arg_dry = val end
 			}, {
 				id = "room",
 				description = "Room size",
 				range = "0..1.1",
 				default = "0.5",
+				fn_set = function(val) arg_room = val end
 			}, {
 				id = "damp",
 				description = "Damping",
 				range = "0..1",
 				default = "0.5",
+				fn_set = function(val) arg_damp = val end
 			}
 		},
-		fn_set = function(arg)
-			local initialroom = arg.room 
-			local initialdamp = arg.damp 
-			local initialwet = arg.wet/scalewet
-			local initialdry = arg.dry or 0
-			local initialwidth = 2
-			local initialmode = 0
-
-			local wet = initialwet * scalewet
-			local roomsize = (initialroom*scaleroom) + offsetroom
-			dry = initialdry * scaledry
-			local damp = initialdamp * scaledamp
-			local width = initialwidth
-			local mode = initialmode
-
-			wet1 = wet*(width/2 + 0.5)
-			wet2 = wet*((1-width)/2)
-
-			comb_fb = roomsize
-			comb_damp1 = damp
-			comb_damp2 = 1 - damp
-			gain = fixedgain
-
-		end,
 		fn_gen = function(gen, in1, in2)
 			in2 = in2 or in1
 			local input = (in1 + in2) * gain

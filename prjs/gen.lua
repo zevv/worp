@@ -5,6 +5,8 @@
 
 jack = Jack:new("worp")
 
+midi = jack:midi(1)
+
 -- Voice generator
 
 o = Dsp:saw { f = 100 }
@@ -16,6 +18,26 @@ gui = Gui:new("Worp")
 
 n = Dsp:noise()
 
+local function map_control(midi, ccnr, gen, id)
+
+	local info = gen:info()
+	local control = info.controls[id]
+
+	dump(control)
+	if not control then return end
+	local min, max = control.range:match("(.+)%.%.(.+)")
+
+	midi:cc(ccnr, function(val)
+		val = min + (val / 127) * (max - min)
+		if control.log then
+			val = (max+1) ^ (val/max) - 1
+		end
+		print(val)
+		gen:set(id, val)
+	end)
+end
+
+map_control(midi, 1, f, "f")
 
 gui:add_gen(f)
 gui:add_gen(o)

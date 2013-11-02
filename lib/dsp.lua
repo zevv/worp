@@ -29,7 +29,7 @@ function Dsp:mkgen(t, init)
 
 	init = init or {}
 	for _, arg in ipairs(t.args) do
-		gen[arg.name] = init[arg.name] or arg.default
+		gen[arg.id] = init[arg.id] or arg.default
 	end
 
 	gen:set(arg)
@@ -61,11 +61,11 @@ function Dsp:noise(init)
 	end
 	
 	return Dsp:mkgen({
-		name = "noise",
+		id = "noise",
 		description = "Noise generator",
 		args = {
 			{
-				name = "type",
+				id = "type",
 				description = "Noise type",
 				range = "uniform,gaussian",
 				default = "uniform",
@@ -113,11 +113,11 @@ function Dsp:osc(init)
 	local i, di = 0, 0
 
 	return Dsp:mkgen({
-		name = "osc",
+		id = "osc",
 		description = "Sine oscillator",
 		args = {
 			{
-				name = "f",
+				id = "f",
 				description = "Frequency",
 				range = "0..20000",
 				log = true,
@@ -141,11 +141,11 @@ function Dsp:saw(init)
 	local v, dv = 0, 0
 
 	return Dsp:mkgen({
-		name = "saw",
+		id = "saw",
 		description = "Saw tooth oscillator",
 		args = {
 			{
-				name = "f",
+				id = "f",
 				description = "Frequency",
 				range = "0..20000",
 				log = true,
@@ -182,33 +182,33 @@ function Dsp:adsr(init)
 	local dv = {}
 
 	return Dsp:mkgen({
-		name = "adsr",
+		id = "adsr",
 		description = "ADSR envelope generator",
 		args = {
 			{
-				name = "on",
+				id = "on",
 				description = "State",
 				range = "true,false",
 				default = "true",
 			}, {
-				name = "A",
+				id = "A",
 				description = "Attack",
 				range = "0..10",
 				unit = "sec",
 				default = "0",
 			}, {
-				name = "D",
+				id = "D",
 				description = "Decay",
 				range = "0..10",
 				unit = "sec",
 				default = "0",
 			}, {
-				name = "S",
+				id = "S",
 				description = "Sustain",
 				range = "0..1",
 				default = "1",
 			}, {
-				name = "R",
+				id = "R",
 				description = "Release",
 				range = "0..10",
 				unit = "sec",
@@ -257,29 +257,29 @@ function Dsp:filter(init)
 	local y0, y1, y2 = 0, 0, 0
 
 	return Dsp:mkgen({
-		name = "filter",
+		id = "filter",
 		description = "Biquad multi-mode filter",
 		args = {
 			{
-				name = "type",
+				id = "type",
 				description = "Filter type",
 				range = "lp,hp,bp,bs,ls,hs,eq",
 				default = "lp",
 			}, {
-				name = "f",
+				id = "f",
 				description = "Frequency",
 				range = "0..20000",
 				log = true,
 				unit = "Hz",
 				default = 440,
 			}, {
-				name = "Q",
+				id = "Q",
 				description = "Resonance",
 				range = "0.1..100",
 				default = 1,
 			}, {
-				name = "gain",
-				description = "Shelf filter gain",
+				id = "gain",
+				description = "Shelf/EQ filter gain",
 				range = "-60..60",
 				unit = "dB",
 				default = 0
@@ -413,26 +413,26 @@ function Dsp:reverb(init)
 
 
 	return Dsp:mkgen({
-		name = "reverb",
+		id = "reverb",
 		description = "Freeverb reverb",
 		args = {
 			{
-				name = "wet",
+				id = "wet",
 				description = "Wet volume",
 				range = "0..1",
 				default = "0.5",
 			}, {
-				name = "dry",
+				id = "dry",
 				description = "Dry volume",
 				range = "0..1",
 				default = "0.5",
 			}, {
-				name = "room",
+				id = "room",
 				description = "Room size",
 				range = "0..1.1",
 				default = "0.5",
 			}, {
-				name = "damp",
+				id = "damp",
 				description = "Damping",
 				range = "0..1",
 				default = "0.5",

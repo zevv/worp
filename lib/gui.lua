@@ -1,166 +1,199 @@
 
 --
--- GUI process
+-- GUI process. This is a forked subprocess handling the GTK gui
 --
 
 local lgi, GLib, Gtk, Gdk 
 
 
-local function worker_tx(worker, msg)
-	P.send(worker.fd, serialize(msg))
-end
-
 
 local cmd_handler = {
 
-	add = function(worker, id, data)
-		
-		local info = data.info
-		local setting = false
+	new = function(worker, id, data)
 
 		local window = Gtk.Window {
-			title = info.description,
-			--resizable = false,
+			title = data.gui_id,
 			width = 400,
 			Gtk.Box {
+				id = "box",
 				border_width = 4,
-				orientation = 'VERTICAL',
-				Gtk.Label {
-					id = "label"
-				},
-				Gtk.Grid {
-					id = "grid",
+				orientation = 'VERTICAL', 
+				{
+					Gtk.Label {
+						use_markup = true,
+						label = "<b>" .. data.gui_id .. "</b>",
+					}
 				}
 			}
 		}
+	
+		worker.gui_list[data.gui_id] = {
+			window = window,
+			group_list = {},
+		}
+		window:show_all()
 
-		window.child.label:set_text(info.description)
-		worker.setter_list[id] = worker.setter_list[id] or {}
-		local setter = worker.setter_list[id]
-		worker.window_list[id] = window
+	end,
 
-		local y = 0
 
-		for _, arg in ipairs(info.args) do
+	add_group = function(worker, id, data)
+	
+		local gui = worker.gui_list[data.gui_id]
+		local info = data.info
+		local setting = false
 
-			local type = "number"
-			if arg.range:find(",") then type = "enum" end
-			local min, max = arg.range:match("(.+)%.%.(.+)")
+		print("add group", data.id)
+		gui.window.child.box:add {
+			Gtk.Frame {
+				label = data.group_id,
+				shadow_type = 'OUT',
+				margin = 5,
+				Gtk.Grid {
+					margin = 5,
+					row_spacing = 5,
+					column_spacing = 5,
+					id = data.group_id,
+				}
+			}
+		}
+		
+		gui.window:show_all()
+	
+		gui.group_list[data.group_id] = {
+			y = 0,
+			control_list = {}
+		}
+
+	end,
+
+
+	add_control = function(worker, id, data)
+		
+		local gui = worker.gui_list[data.gui_id]
+		local group = gui.group_list[data.group_id]
+
+		local window = gui.window
+		local grid = window.child[data.group_id]
+
+		local y = group.y
+		group.y = group.y + 1
+
+		local control = data.control
+		local fn_set = function(v) end
+		
+		grid:add {
+			left_attach = 0, top_attach = y,
+			Gtk.Label {
+				label = control.description,
+				halign = 'START',
+				valign = 'END',
+			}
+		}
+
+		local type = "number"
+		if control.range:find(",") then type = "enum" end
+
+		local id = "%s-%s-%s" % { data.gui_id, data.group_id, control.id }
+
+		if type == "number" then
+		
+			local min, max = control.range:match("(.+)%.%.(.+)")
 			min = tonumber(min) or 0
 			max = tonumber(max) or 1
 
-			window.child.grid:add {
-				left_attach = 0, top_attach = y,
-				Gtk.Label {
-					label = arg.name,
-					use_underline = true,
-					halign = 'START',
-					valign = 'END',
+			local adjustment = Gtk.Adjustment {
+				lower = min,
+				upper = max,
+				step_increment = (max-min)/1000,
+				page_increment = (max-min)/10,
+			}
+
+			local label = Gtk.Label {
+				halign = 'END',
+			}
+
+			local function on_value_changed(s)
+				local fmt = control.fmt or "%.1f"
+				local val = s.adjustment.value
+				if control.log then
+					if val < 0.001 then val = 0.001 end
+					val = (max+1) ^ (val/max) - 1
+				end
+				val = fmt % val
+				label:set_text(val)
+				worker:tx { cmd = "set", data = {
+					uid = data.uid,
+					control_id = control.id,
+					value = val,
+				}}
+			end
+
+			fn_set = function(val)
+				if control.log then
+					val = (max) * math.log(val+1) / math.log(max)
+				end
+				adjustment:set_value(val)
+			end
+
+			grid:add {
+				left_attach = 1, top_attach = y,
+				Gtk.Scale {
+					adjustment = adjustment,
+					hexpand = true,
+					draw_value = false,
+					on_value_changed = on_value_changed
 				}
 			}
 
-			if type == "number" then
+			grid:add {
+				left_attach = 3, top_attach = y,
+				label,
+			}
 
-				window.child.grid:add {
-					left_attach = 1, top_attach = y,
-					Gtk.Scale {
-						adjustment = Gtk.Adjustment {
-							lower = min,
-							upper = max,
-							step_increment = (max-min)/1000,
-							page_increment = (max-min)/10,
-						},
-						id = id .. "-" .. arg.name,
-						hexpand = true,
-						draw_value = false,
-						on_value_changed = function(s)
-							local val = s.adjustment.value
-							if arg.log then
-								if val < 0.001 then val = 0.001 end
-								val = (max+1) ^ (val/max) - 1
-							end
-							local val = string.format("%.1f", val)
-							window.child[id .. "-" .. arg.name .. "-label"]:set_text(val)
-							if not setting then
-								worker_tx(worker, { cmd = "set", genid = id, data = { [arg.name] = val }})
-							end
-						end
-					}
-				}
+			grid:add {
+				left_attach = 4, top_attach = y,
+				Gtk.Label {
+					label = control.unit or "",
+					halign = 'START',
+				},
+			}
 
-				window.child.grid:add {
-					left_attach = 3, top_attach = y,
-					Gtk.Label {
-						id = id .. "-" .. arg.name .. "-label",
-					}
-				}
+		else
 
-				window.child.grid:add {
-					left_attach = 4, top_attach = y,
-					Gtk.Label {
-						label = arg.unit or "",
-						halign = 'END',
-					},
-				}
-
-				setter[arg.name] = function(val)
-					setting = true
-					if arg.log then
-						val = (max) * math.log(val+1) / math.log(max)
-					end
-					window.child[id .. "-" .. arg.name].adjustment:set_value(val)
-					setting = false
-				end
-				
-			else
-
-				local t = {}
-				for v in arg.range:gmatch("[^,]+") do
-					t[#t+1] = v
-					t[v] = #t
-				end
-
-				window.child.grid:add {
-					left_attach = 1, top_attach = y,
-					Gtk.ComboBoxText {
-						id = id .. "-" .. arg.name,
-						on_changed = function(s)
-							local val = t[s:get_active()+1] 
-							worker_tx(worker, { cmd = "set", genid = id, data = { [arg.name] = val }})
-						end
-					}
-				}
-
-				local c = window.child[id .. "-" .. arg.name]
-				for i, v in ipairs(t) do
-					c:append(nil, v)
-				end
-				
-				setter[arg.name] = function(val)
-					setting = true
-					c:set_active(t[val]-1)
-					setting = false
-				end
-
+			local t = {}
+			for v in control.range:gmatch("[^,]+") do
+				t[#t+1] = v
+				t[v] = #t
 			end
 
-			y = y + 1
+			grid:add {
+				left_attach = 1, top_attach = y,
+				Gtk.ComboBoxText {
+					on_changed = function(s)
+					end
+				}
+			}
+
 		end
+	
+		group.control_list[control.id] = {
+			control = control,
+			fn_set = fn_set,
+		}
 
 		window:show_all()
 	end,
 
-	set = function(worker, id, data)
-		local ss = worker.setter_list[id]
-		if ss then
-			for k, v in pairs(data.args) do
-				local s = ss[k]
-				if s then
-					s(v)
-				end
-			end
-		end
+
+	set_control = function(worker, id, data)
+
+		local gui = worker.gui_list[data.gui_id]
+		local group = gui.group_list[data.group_id]
+		local control = group.control_list[data.control_id]
+		control.fn_set(data.value)
+
 	end
+
 }
 
 
@@ -182,10 +215,24 @@ local function handle_msg(worker, code)
 end
 
 
-local function gui_main(worker)
+local function gui_main(fd)
 
 	lgi = require "lgi"
 	GLib, Gtk, Gdk = lgi.GLib, lgi.Gtk, lgi.Gdk
+		
+	local worker = {
+
+		-- methods
+
+		tx = function(worker, msg)
+			P.send(fd, serialize(msg))
+		end,
+
+		-- data
+
+		fd = fd,
+		gui_list = {}
+	}
 
 	-- Main GTK loop: receive messages from main process and handle GUI
 	
@@ -203,23 +250,68 @@ local function gui_main(worker)
 end
 
 
-local function gui_start(gui)
+--
+-- Main process
+--
+
+
+local function group_add_control(group, control, uid, fn_set)
+
+	group.gui.Gui:tx { cmd = "add_control", data = { 
+		gui_id = group.gui.gui_id, 
+		group_id = group.id, 
+		control = control,
+		uid = uid,
+	}}
+	
+	if control.default then
+		group.gui.Gui:tx { cmd = "set_control", data = { 
+			gui_id = group.gui.gui_id, 
+			group_id = group.id, 
+			control_id = control.id,
+			value = control.default}}
+	end
+
+	--group.gui.fn_set[id] = fn_set
+end
+
+
+local function gui_add_group(gui, group_id)
+	
+	local group = {
+
+		-- methods
+		
+		add_control = group_add_control,
+
+		-- data
+
+		gui = gui,
+		id = group_id,
+	}
+
+	
+	gui.Gui:tx { cmd = "add_group", data = { 
+		gui_id = gui.gui_id, 
+		group_id = group.id }}
+
+	return group
+
+end
+
+
+local function gui_start(Gui)
 	local s1, s2 = P.socketpair(P.AF_UNIX, P.SOCK_DGRAM, 0)
-	gui.pid = P.fork()
-	if gui.pid == 0 then
+	Gui.pid = P.fork()
+	if Gui.pid == 0 then
 		for i = 3, 255 do
 			if i ~= s2 then P.close(i) end
 		end
-		local worker = {
-			fd = s2,
-			window_list = {},
-			setter_list = {},
-		}
-		gui_main(worker)
+		gui_main(s2)
 	end
 	P.close(s2)
-	gui.s = s1
-	gui.gen_cache = {}
+	Gui.s = s1
+	Gui.uid_to_gen = {}
 
 	watch_fd(s1, function()
 		local code = P.recv(s1, 65535)
@@ -228,9 +320,9 @@ local function gui_start(gui)
 			local ok, msg = safecall(fn)
 			if ok then
 				if msg.cmd == "set" then
-					local gen = gui.gen_cache[msg.genid]
+					local gen = Gui.uid_to_gen[msg.data.uid]
 					if gen then
-						gen:set(msg.data)
+						gen:set { [msg.data.control_id] = msg.data.value }
 					end
 				end
 			else
@@ -240,43 +332,57 @@ local function gui_start(gui)
 			logf(LG_WRN, "ipc error: %s", err)
 		end
 	end)
-end
 
---
--- Main process
---
-
-local function gui_tx(gui, msg)
-	P.send(gui.s, serialize(msg))
-end
-
-
-local function add(gui, gen)
-
-	if not gui.pid then
-		gui_start(gui)
+	Gui.tx = function(_, msg)
+		P.send(Gui.s, serialize(msg))
 	end
-
-	local genid = tostring(math.random()):match("%.(.+)")
-	gui.gen_cache[genid] = gen
-
-	gui_tx(gui, { cmd = "add", genid = genid, data = { info = gen:info() }})
-	gui_tx(gui, { cmd = "set", genid = genid, data = { args = gen:get() }})
-
 end
 
 
-local function add2(_, gen)
+local function gui_add_gen(gui, gen)
 
+	local uid = "%08x" % math.random(0, 0xffffffff)
+	gui.Gui.uid_to_gen[uid] = gen
 
-	window:show_all()
---	Gtk.main()
+	local info = gen:info()
+	local group = gui:add_group(info.description)
+	for _, control in ipairs(info.args) do
+		group:add_control(control, uid, function(v)
+			gen:set { [control.id] = v }
+		end)
+	end
 end
 
+
+local function new(Gui, gui_id)
+
+	if not Gui.pid then
+		gui_start(Gui)
+	end
+	
+	local gui = {
+
+		-- methods
+
+		add_group = gui_add_group,
+		add_gen = gui_add_gen,
+
+		-- data
+
+		gui_id = gui_id,
+		Gui = Gui,
+
+	}
+	
+	gui.Gui:tx { cmd = "new", data = { gui_id = gui_id } }
+
+	return gui
+
+end
 
 
 return {
-   add = add,
+   new = new,
 }
 
 -- vi: ft=lua ts=3 sw=3

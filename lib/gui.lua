@@ -44,7 +44,7 @@ local cmd_handler = {
 
 		gui.window.child.box:add {
 			Gtk.Frame {
-				label = data.group_id,
+				label = data.label,
 				shadow_type = 'OUT',
 				margin = 5,
 				Gtk.Grid {
@@ -196,7 +196,7 @@ local cmd_handler = {
 
 
 local function handle_msg(worker, code)
-	local fn, err = load("return " .. code)
+	local fn, err = load("return " .. code, "msg")
 	if fn then
 		local ok, msg = safecall(fn)
 		if ok then
@@ -205,10 +205,10 @@ local function handle_msg(worker, code)
 				h(worker, msg.genid, msg.data)
 			end
 		else
-			logf(LG_WRN, "ipc error: %s", data)
+			logf(LG_WRN, "ipc run error: %s", data, code)
 		end
 	else
-		logf(LG_WRN, "ipc error: %s", err)
+		logf(LG_WRN, "ipc syntax error: %s", err)
 	end
 end
 
@@ -281,7 +281,7 @@ local function group_add_control(group, control, uid, fn_set)
 end
 
 
-local function gui_add_group(gui, group_id)
+local function gui_add_group(gui, label)
 	
 	local group = {
 
@@ -292,12 +292,14 @@ local function gui_add_group(gui, group_id)
 		-- data
 
 		gui = gui,
-		id = group_id,
+		label = label,
+		id = "%08x" % math.random(0, 0xffffffff),
 	}
 
 	
 	gui.Gui:tx { cmd = "add_group", data = { 
 		gui_id = gui.gui_id, 
+		label = group.label,
 		group_id = group.id }}
 
 	return group
@@ -344,11 +346,11 @@ local function gui_start(Gui)
 end
 
 
-local function gui_add_gen(gui, gen)
+local function gui_add_gen(gui, gen, label)
 
-	local info = gen:info()
-	local group = gui:add_group(info.description)
-	for _, control in ipairs(info.controls) do
+	local controls = gen:controls()
+	local group = gui:add_group(label or gen.description)
+	for _, control in ipairs(controls) do
 		local uid = "%08x" % math.random(0, 0xffffffff)
 		gui.Gui.uid_to_control[uid] = control
 		group:add_control(control, uid, function(v)

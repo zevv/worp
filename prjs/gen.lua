@@ -22,25 +22,23 @@ n = Dsp:noise()
 local function map_control(midi, ccnr, gen, id)
 
 	local control = gen:control(id)
-	local info = gen:info()
 
 	if not control then return end
 	local min, max = control.range:match("(.+)%.%.(.+)")
 
 	midi:cc(ccnr, function(val)
-		val = min + (val / 127) * (max - min)
-		if control.log then
-			val = (max+1) ^ (val/max) - 1
-		end
-		control:set(val)
+		--val = min + (val / 127) * (max - min)
+		control:set_uni(val/127)
 	end)
 end
 
 map_control(midi, 1, f, "f")
 map_control(midi, 2, f, "Q")
 
+map_control(midi, 5, o, "f")
+
+gui:add_gen(o, "Flipje")
 gui:add_gen(f)
-gui:add_gen(o)
 gui:add_gen(lfo)
 gui:add_gen(rev)
 

@@ -125,7 +125,7 @@ function serialize(o)
 		end
 		for k, c in pairs(o) do
 			if not done[k] then
-				if type(k) ~= "table" then
+				if type(k) ~= "function" and type(k) ~= "table" then
 					table.insert(out, "[" .. serialize(k) .. "]=" .. serialize(c))
 				end
 			end

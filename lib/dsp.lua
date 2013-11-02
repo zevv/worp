@@ -4,85 +4,122 @@ local Dsp = {}
 srate = 44100
 
 
-function Dsp:mkgen(info, init)
+function Dsp:mkcontrol(def, gen)
+			
+	local min, max = def.range:match("(.+)%.%.(.+)")
 
-	local i2c = {}
-	local gen = {}
-	local set_cb = {}
+	local control = {
 
-	local controls = info.controls
-	controls.fn_set = controls.fn_set or function() end
+		-- methods
 
-	for _, control in ipairs(controls) do
-
-		control.fn_set = control.fn_set or function() end
-		control.type = control.type or "number"
-		control.gen = gen
-
-		local meta
-		meta = {
-			cb_set = {},
-			__index = {
-				set = function(control, value, update)
-					control.value = value
-					control.fn_set(value)
-					for fn in pairs(meta.cb_set) do
-					  fn(value)
-					end
-					if update ~= false then
-						gen:update()
-					end
-				end,
-				on_set = function(control, fn)
-					meta.cb_set[fn] = true
-				end,
-				info = function(control)
-					return control
-				end,
-			}
-		}
+		get = function(control)
+			return control.value
+		end,
 		
-		setmetatable(control, meta)
-		i2c[control.id] = control
-	end
+		set = function(control, value, update)
+			if value then
+				control.value = value
+				for fn in pairs(control.fn_set) do
+					fn(value)
+				end
+				if update ~= false then
+					gen:update()
+				end
+			end
+		end,
 
+		set_uni = function(control, v, update)
+			if min then
+				v = min + v * (max-min)
+				if control.log then v = (max+1) ^ (v/max) - 1 end
+				control:set(v)
+			end
+		end,
+
+		on_set = function(control, fn)
+			control.fn_set[fn] = true
+		end,
+
+		-- data
+	
+		id = def.id or "",
+		description = def.description or "",
+		type = def.type or "number",
+		range = def.range,
+		log = def.log,
+		unit = def.unit,
+		default = def.default,
+		value = nil,
+		fn_set = {},
+	}
+
+	setmetatable(control, {
+		__tostring = function()
+			return "Control:%s:%s(%s)" % { gen.id, control.id, control.value }
+		end
+	})
+
+	control:on_set(def.fn_set)
+	control:set(def.default, false)
+
+	return control
+
+end
+
+
+function Dsp:mkgen(def, init)
+	
+	local gen = {
+		id = def.id,
+		description = def.description,
+		control_list = {}
+	}
+	
 	setmetatable(gen, {
+		__tostring = function()
+			return "Generator:%s" % { def.id }
+		end,
 		__call = function(_, ...)
-			return info.fn_gen(gen, ...)
+			return def.fn_gen(gen, ...)
 		end,
 		__index = {
 			update = function()
-				controls.fn_set()
+				if def.controls.fn_set then
+					def.controls.fn_set()
+				end
 			end,
 			set = function(_, id, value)
 				if type(id) == "table" then
 					for id, value in pairs(id) do
-						i2c[id]:set(value, false)
+						gen:control(id):set(value, false)
 					end
 					gen:update()
 				else
-					i2c[id]:set(value)
+					gen:control(id):set(value)
 				end
 			end,
-			info = function()
-				return info
+			controls = function()
+				return gen.control_list
 			end,
 			get = function()
 				return gen
 			end,
 			control = function(_, id)
-				return i2c[id]
+				return gen.control_list[id]
 			end
 		}
 	})
 
-	local init = init or {}
-	local val = {}
-	for _, arg in ipairs(info.controls) do
-		val[arg.id] = init[arg.id] or arg.default
+	for i, def in ipairs(def.controls) do
+		local control = Dsp:mkcontrol(def, gen)
+		gen.control_list[i] = control
+		gen.control_list[control.id] = control
+		if init then
+			control:set(init[control.id], false)
+		end
 	end
 
-	gen:set(val)
+	gen:update()
 
 	return gen
 end

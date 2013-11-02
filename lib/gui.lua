@@ -219,6 +219,8 @@ end
 
 local function gui_main(fd)
 
+	P.signal(P.SIGINT, nil)
+
 	lgi = require "lgi"
 	GLib, Gtk, Gdk = lgi.GLib, lgi.Gtk, lgi.Gdk
 		

@@ -43,13 +43,13 @@ function Dsp:mkcontrol(def, gen)
 		end,
 
 		map_cc = function(control, midi, ch, nr)
-			midi:cc(ch, nr, function(ch, nr, v)
+			midi:cc(ch, nr, function(v)
 				control:set_uni(v/127)
 			end)
 		end,
 		
 		map_note = function(control, midi, ch)
-			midi:note(ch, function(ch, onoff, note, vel)
+			midi:note(ch, function(onoff, note, vel)
 				if onoff then
 					local f = 440 * math.pow(2, (note-57) / 12)
 					control:set(f)

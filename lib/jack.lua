@@ -84,7 +84,7 @@ local function jack_midi(jack, name, fn)
 		local b1, b2, b3 = string.byte(msg, 1, #msg)
 
 		local t = bit.band(b1, 0xf0)
-		local ch = bit.band(b1, 0x0f)
+		local ch = bit.band(b1, 0x0f) + 1
 
 		if t == 0x80 or t == 0x90 then
 			if midi.fn_note[ch] then

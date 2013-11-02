@@ -60,13 +60,15 @@ local function jack_midi(jack, name, fn)
 
 		-- methods
 
-		note = function(midi, fn)
-			midi.fn_note[fn] = true
+		note = function(midi, ch, fn)
+			midi.fn_note[ch] = midi.fn_note[ch] or {}
+			midi.fn_note[ch][fn] = true
 		end,
 
-		cc = function(midi, nr, fn)
-			midi.fn_cc[nr] = midi.fn_cc[nr] or {}
-			midi.fn_cc[nr][fn] = true
+		cc = function(midi, ch, nr, fn)
+			midi.fn_cc[ch] = midi.fn_cc[ch] or {}
+			midi.fn_cc[ch][nr] = midi.fn_cc[ch][nr] or {}
+			midi.fn_cc[ch][nr][fn] = true
 		end,
 
 		-- data
@@ -76,28 +78,25 @@ local function jack_midi(jack, name, fn)
 		fn_cc = {},
 	}
 
-	local midi_msg = {
-		[0x90] = "noteon",
-		[0x80] = "noteoff",
-		[0xb0] = "cc",
-		[0xc0] = "pc",
-	}
-
-
 	watch_fd(midi.fd, function()
 		local msg = P.read(midi.fd, 3)
 
 		local b1, b2, b3 = string.byte(msg, 1, #msg)
 
 		local t = bit.band(b1, 0xf0)
+		local ch = bit.band(b1, 0x0f)
 
 		if t == 0x80 or t == 0x90 then
-			for fn in pairs(midi.fn_node) do
-				fn(t == 0x80, b2, b3)
+			if midi.fn_note[ch] then
+				for fn in pairs(midi.fn_note[ch]) do
+					fn(t == 0x90, b2, b3)
+				end
 			end
 		elseif t == 0xb0 then
-			for fn in pairs(midi.fn_cc[b2] or {}) do
-				fn(b3)
+			if midi.fn_cc[ch] and midi.fn_cc[ch][b2] then
+				for fn in pairs(midi.fn_cc[ch][b2] or {}) do
+					fn(b3)
+				end
 			end
 		end
 			

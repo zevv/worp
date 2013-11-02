@@ -4,8 +4,7 @@
 --
 
 jack = Jack:new("worp")
-
-midi = jack:midi(1)
+midi = jack:midi("midi")
 
 -- Voice generator
 
@@ -19,23 +18,10 @@ gui = Gui:new("Worp")
 n = Dsp:noise()
 
 
-local function map_control(midi, ccnr, gen, id)
+f:map_cc(midi, 1, 1)
+rev:map_cc(midi, 1, 5)
 
-	local control = gen:control(id)
-
-	if not control then return end
-	local min, max = control.range:match("(.+)%.%.(.+)")
-
-	midi:cc(ccnr, function(val)
-		--val = min + (val / 127) * (max - min)
-		control:set_uni(val/127)
-	end)
-end
-
-f:map_cc(midi, 1)
---map_control(midi, 2, f, "Q")
-
---map_control(midi, 5, o, "f")
+o:control("f"):map_note(midi, 1)
 
 gui:add_gen(o, "Flipje")
 gui:add_gen(f)

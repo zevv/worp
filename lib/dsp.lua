@@ -42,9 +42,18 @@ function Dsp:mkcontrol(def, gen)
 			control.fn_set[fn] = true
 		end,
 
-		map_cc = function(control, midi, nr)
-			midi:cc(nr, function(v)
+		map_cc = function(control, midi, ch, nr)
+			midi:cc(ch, nr, function(ch, nr, v)
 				control:set_uni(v/127)
+			end)
+		end,
+		
+		map_note = function(control, midi, ch)
+			midi:note(ch, function(ch, onoff, note, vel)
+				if onoff then
+					local f = 440 * math.pow(2, (note-57) / 12)
+					control:set(f)
+				end
 			end)
 		end,
 
@@ -116,9 +125,9 @@ function Dsp:mkgen(def, init)
 			return gen.control_list[id]
 		end,
 
-		map_cc = function(gen, midi, nr)
+		map_cc = function(gen, midi, ch, nr)
 			for i, control in ipairs(gen:controls()) do
-				control:map_cc(midi, nr+i-1)
+				control:map_cc(midi, ch, nr+i-1)
 			end
 		end,
 

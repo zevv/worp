@@ -6,9 +6,11 @@
 jack = Jack:new("worp")
 fs = Fluidsynth:new("synth", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
 
+midi = jack:midi(1)
+
 piano = fs:add(1)
 
-jack:midi_map_instr("midi", 1, piano)
+midi:map_instr(1, piano)
 
 jack:connect("synth")
 jack:connect("worp")

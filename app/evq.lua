@@ -29,9 +29,9 @@ end
 --
 
 function play(fn, note, vol, dur)
-	fn(true, note, vol or 127)
+	fn(note, vol or 127)
 	at(dur * 0.99, function()
-		fn(false, note, vol)
+		fn(note, 0)
 	end)
 end
 

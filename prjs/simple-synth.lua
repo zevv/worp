@@ -4,18 +4,30 @@
 --
 
 jack = Jack:new("worp")
+gui = Gui:new("worp")
+fs = Fluidsynth:new("worp", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
+ls = Linuxsampler:new("worp", "/opt/samples")
+
+piano = ls:add("megapiano.gig")
+
+
 midi = jack:midi("midi")
 
-gui = Gui:new("worp")
+c = Dsp:const()
+gui:add_mod(c)
 
+midi:map_mod(1, 1, c)
 
--- Voice generator
+-- Voice generator module
 
 function voice()
 
-	local osc = Dsp:osc()
-	local adsr = Dsp:adsr { A = 0.1, D = 0.1, S = 0.6, R = 0.5 }
-	local velocity = 0
+	local osc = Dsp:saw()
+	local filter = Dsp:filter { type = "lp" }
+	local adsr = Dsp:adsr { A = 0.03, D = 0.03, S = 0.6, R = 1.6 }
+	local adsr2 = Dsp:adsr { A = 0.3, D = 0.8, S = 0.5, R = 1.6 }
+	local lfo = Dsp:osc { f = 6 }
+	local freq
 
 	return Dsp:mkmod({
 		id = "synth",
@@ -30,38 +42,36 @@ function voice()
 				default = 440,
 				fn_set = function(v)
 					osc:set { f = v }
+					freq = v
 				end
 			}, {
 				id = "vel",
 				description = "Velocity",
 				fn_set = function(v)
 					adsr:set { vel = v }
+					adsr2:set { vel = v == 0 and 0 or 1 }
 				end
 			},
 		},
 		fn_gen = function()
-			local v = adsr()
-			return osc() * v
+			filter:set { f = adsr2() * (lfo() * 0.1 + 1) * freq * c() * 5 }
+			return filter(osc()) * adsr()
 		end
 	}, init)
 
 end
 
 
-local v = Dsp:poly { gen = voice }
+local v, synth = Dsp:poly { gen = voice }
 
-midi:note(1, function(note, vel)
-	local freq = 440 * math.pow(2, (note-57) / 12)
-	v:set { f = freq, vel = vel/127 }
-end)
 
+midi:map_instr(1, piano)
+midi:map_instr(5, synth)
 
 
 jack:dsp("worp", 0, 1, function()
 	return v()
 end)
-
-gui:add_mod(v)
 
 -- Connect ports
 

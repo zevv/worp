@@ -60,15 +60,33 @@ local function jack_midi(jack, name, fn)
 
 		-- methods
 
-		note = function(midi, ch, fn)
+		on_note = function(midi, ch, fn)
 			midi.fn_note[ch] = midi.fn_note[ch] or {}
 			midi.fn_note[ch][fn] = true
 		end,
 
-		cc = function(midi, ch, nr, fn)
+		on_cc = function(midi, ch, nr, fn)
 			midi.fn_cc[ch] = midi.fn_cc[ch] or {}
 			midi.fn_cc[ch][nr] = midi.fn_cc[ch][nr] or {}
 			midi.fn_cc[ch][nr][fn] = true
+		end,
+
+		map_instr = function(midi, ch, instr)
+			midi:on_note(ch, function(note, vel)
+				instr(note, vel/127)
+			end)
+		end,
+
+		map_control = function(midi, ch, nr, control)
+			midi:on_cc(ch, nr, function(v)
+				control:set(v)
+			end)
+		end,
+
+		map_mod = function(midi, ch, nr, mod)
+			for i, control in ipairs(mod:controls()) do
+				midi:map_control(ch, nr+i-1, control)
+			end
 		end,
 
 		-- data
@@ -95,7 +113,7 @@ local function jack_midi(jack, name, fn)
 		elseif t == 0xb0 then
 			if midi.fn_cc[ch] and midi.fn_cc[ch][b2] then
 				for fn in pairs(midi.fn_cc[ch][b2] or {}) do
-					fn(b3)
+					fn(b3/127)
 				end
 			end
 		end
@@ -104,24 +122,6 @@ local function jack_midi(jack, name, fn)
 
 	return midi
 
-end
-
-
---
--- Map given instrument function to channel 'channel' of midi port 'name'
---
-
-local function jack_midi_map_instr(jack, name, channel, instr)
-	jack:midi(name, function(ch, t, d1, d2)
-		if ch == channel then
-			if t == "noteon" then 
-				instr(true, d1, d2/127)
-			end
-			if t == "noteoff" then 
-				instr(false, d1, d2/127)
-			end
-		end
-	end)
 end
 
 
@@ -199,7 +199,6 @@ local function new(_, name)
 
 		dsp = jack_dsp,
 		midi = jack_midi,
-		midi_map_instr = jack_midi_map_instr,
 		connect = jack_conn,
 
 		-- data

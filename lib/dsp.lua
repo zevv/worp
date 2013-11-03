@@ -40,21 +40,6 @@ function Dsp:mkcontrol(def, mod)
 			control.fn_set[fn] = true
 		end,
 
-		map_cc = function(control, midi, ch, nr)
-			midi:cc(ch, nr, function(v)
-				control:set_uni(v/127)
-			end)
-		end,
-		
-		map_note = function(control, midi, ch)
-			midi:note(ch, function(onoff, note, vel)
-				if onoff then
-					local f = 440 * math.pow(2, (note-57) / 12)
-					control:set(f)
-				end
-			end)
-		end,
-
 		-- data
 	
 		id = def.id or "",
@@ -124,12 +109,6 @@ function Dsp:mkmod(def, init)
 
 		control = function(mod, id)
 			return mod.control_list[id]
-		end,
-
-		map_cc = function(mod, midi, ch, nr)
-			for i, control in ipairs(mod:controls()) do
-				control:map_cc(midi, ch, nr+i-1)
-			end
 		end,
 
 		help = function(mod)
@@ -675,7 +654,7 @@ function Dsp:poly(init)
 	local gain
 	local freq, vel = 0, 0
 
-	return Dsp:mkmod({
+	local mod = Dsp:mkmod({
 		id = "poly",
 		description = "Polyphonic module",
 		controls = {
@@ -684,7 +663,7 @@ function Dsp:poly(init)
 				if #vs ~= count then
 					vs = {}
 					for i = 1, count do
-						vs[i] = { mod = gen(), free = true }
+						vs[i] = { mod = gen(), free = true, age = time() }
 					end
 					gain = 1 / count
 				end
@@ -703,7 +682,9 @@ function Dsp:poly(init)
 						if v.freq == freq then
 							v.mod:set { vel = 0 }
 							v.free = true
+							v.age = time()
 						end
+						table.sort(vs, function(a, b) return a.age < b.age end)
 					end
 				end
 			end,
@@ -727,7 +708,7 @@ function Dsp:poly(init)
 			}, {
 				id = "count",
 				description = "Voice count",
-				default = 5,
+				default = 4,
 				max = 10,
 				fn_set = function(v) count = math.floor(v+0.5) end
 			},
@@ -741,8 +722,14 @@ function Dsp:poly(init)
 		end
 	}, init)
 
-end
+	local instr = function(note, vel)
+		local freq = 440 * math.pow(2, (note-57) / 12)
+		mod:set { f = freq, vel = vel }
+	end
 
+	return mod, instr
+
+end
 
 
 return Dsp

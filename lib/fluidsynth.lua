@@ -44,8 +44,8 @@ local function add(fluidsynth, prog)
 
 	fs.fluid_synth_program_change(fluidsynth.synth, ch, prog)
 
-	return function(onoff, note, vel)
-		if onoff then
+	return function(note, vel)
+		if vel > 0 then
 			fs.fluid_synth_noteon(fluidsynth.synth, ch, note, vel * 127);
 		else
 			fs.fluid_synth_noteoff(fluidsynth.synth, ch, note, vel * 127);

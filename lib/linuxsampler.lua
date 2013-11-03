@@ -43,8 +43,8 @@ local function add(ls, fname, index)
 	local inst = info:match("INSTRUMENT_NAME: ([^\n\r]+)") or "-"
 	logf(LG_INF, "linuxsampler channel %s: %s", ch, inst)
 	
-	return function(onoff, key, vel)
-		if onoff then
+	return function(key, vel)
+		if vel > 0 then
 			ls:cmd("SEND CHANNEL MIDI_DATA NOTE_ON %s %s %s\n" % { ch, key, vel * 127 })
 		else
 			ls:cmd("SEND CHANNEL MIDI_DATA NOTE_OFF %s %s %s\n" % { ch, key, vel * 127 })

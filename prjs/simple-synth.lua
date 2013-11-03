@@ -24,8 +24,8 @@ function voice()
 
 	local osc = Dsp:saw()
 	local filter = Dsp:filter { type = "lp" }
-	local adsr = Dsp:adsr { A = 0.03, D = 0.03, S = 0.6, R = 1.6 }
-	local adsr2 = Dsp:adsr { A = 0.3, D = 0.8, S = 0.5, R = 1.6 }
+	local adsr = Dsp:adsr { A = 0.03, D = 0.03, S = 0.6, R = 0.6 }
+	local adsr2 = Dsp:adsr { A = 0.3, D = 0.8, S = 0.5, R = 0.6 }
 	local lfo = Dsp:osc { f = 6 }
 	local freq
 
@@ -66,7 +66,7 @@ local v, synth = Dsp:poly { gen = voice }
 
 
 midi:map_instr(1, piano)
-midi:map_instr(5, synth)
+midi:map_instr(2, synth)
 
 
 jack:dsp("worp", 0, 1, function()

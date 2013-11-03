@@ -79,7 +79,7 @@ local function jack_midi(jack, name, fn)
 
 		map_control = function(midi, ch, nr, control)
 			midi:on_cc(ch, nr, function(v)
-				control:set(v)
+				control:set_uni(v)
 			end)
 		end,
 

@@ -18,12 +18,10 @@ gui = Gui:new("Worp")
 n = Dsp:noise()
 c = Dsp:const()
 
-f:map_cc(midi, 1, 1)
-rev:map_cc(midi, 1, 5)
+midi:map_mod(1, 1, f)
+midi:map_mod(1, 5, rev)
 
 f:help()
-
-o:control("f"):map_note(midi, 1)
 
 gui:add_mod(o, "Flipje")
 gui:add_mod(f)

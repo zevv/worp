@@ -21,6 +21,8 @@ c = Dsp:const()
 f:map_cc(midi, 1, 1)
 rev:map_cc(midi, 1, 5)
 
+f:help()
+
 o:control("f"):map_note(midi, 1)
 
 gui:add_mod(o, "Flipje")

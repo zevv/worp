@@ -130,6 +130,13 @@ function Dsp:mkmod(def, init)
 			end
 		end,
 
+		help = function(mod)
+			print("%s: %s" % { mod.id, mod.description })
+			for _, control in ipairs(mod:controls()) do
+				print(" - %s: %s (%s)" % { control.id, control.description, control.unit or "" })
+			end
+		end,
+
 		-- data
 
 		id = def.id,
@@ -470,7 +477,7 @@ function Dsp:filter(init)
 				id = "type",
 				description = "Filter type",
 				type = "enum",
-				options =  { "lp", "hp", "bp", "bs", "ls", "hs", "eq","ap" },
+				options =  { "lp", "hp", "bp", "bs", "ls", "hs", "eq", "ap" },
 				default = "lp",
 				fn_set = function(val) type = val end
 			}, {

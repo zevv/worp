@@ -109,8 +109,7 @@ local cmd_handler = {
 					if val < 0.001 then val = 0.001 end
 					val = (control.max+1) ^ (val/control.max) - 1
 				end
-				val = control.fmt % val
-				label:set_text(val)
+				label:set_text(control.fmt % val)
 				if not mute then
 					worker:tx { cmd = "set", data = {
 						uid = data.uid,
@@ -151,7 +150,8 @@ local cmd_handler = {
 				},
 			}
 
-		else
+		elseif control.type == "enum" then
+
 			local combo = Gtk.ComboBoxText {
 				on_changed = function(s)
 					worker:tx { cmd = "set", data = {

@@ -81,7 +81,9 @@ function Dsp:mkcontrol(def, mod)
 		end
 	})
 
-	control:on_set(def.fn_set)
+	if def.fn_set then
+		control:on_set(def.fn_set)
+	end
 	control:set(def.default, false)
 
 	return control
@@ -334,29 +336,24 @@ function Dsp:adsr(init)
 	}
 
 	local state, v = nil, 0
+	local velocity = 0
 	local dv_A, dv_D, dv_R, level_S = 0, 0, 0, 1
-	local dv = {}
+	local dv = 0
 
 	return Dsp:mkmod({
 		id = "adsr",
 		description = "ADSR envelope generator",
 		controls = {
 			{
-				id = "on",
-				description = "State",
-				type = "enum",
-				options = "true,false",
-				default = "true",
-				fn_update = function(val)
-					if val and  state == nil then
+				id = "vel",
+				description = "Velocity",
+				fn_set = function(val)
+					if val > 0 then
+						velocity = val
 						state, dv = "A", dv_A
 					end
-					if not val then
-						if state == "R" and v <= 0 then
-							state, dv = "done", 0
-						else
-							state, dv = "R", dv_R
-						end
+					if val == 0 then
+						state, dv = "R", dv_R
 					end
 				end
 			}, {
@@ -366,7 +363,7 @@ function Dsp:adsr(init)
 				unit = "sec",
 				default = "0",
 				fn_set = function(val)
-					dv_A =  1/(srate * val)
+					dv_A =  math.min(1/(srate * val), 1)
 				end,
 			}, {
 				id = "D",
@@ -375,7 +372,7 @@ function Dsp:adsr(init)
 				unit = "sec",
 				default = "0",
 				fn_set = function(val)
-					dv_D = -1/(srate * arg.D)
+					dv_D = math.max(-1/(srate * val), -1)
 				end,
 			}, {
 				id = "S",
@@ -391,7 +388,7 @@ function Dsp:adsr(init)
 				unit = "sec",
 				default = "0",
 				fn_set = function(val)
-					dv_R = -1/(srate * val)
+					dv_R = math.max(-1/(srate * val), -1)
 				end
 			}, 
 		},
@@ -404,7 +401,7 @@ function Dsp:adsr(init)
 			v = v + dv
 			v = math.max(v, 0)
 			v = math.min(v, 1)
-			return v
+			return v * velocity
 		end,
 
 	}, init)
@@ -667,59 +664,83 @@ end
 
 
 --
--- Make polyphonic synth. Takes sound generator function, and 
--- returns an instrument function and dsp function
+-- Make mod polyphonic
 --
 
-function Dsp:poly(fn_gen, max)
+function Dsp:poly(init)
 
+	local count 
+	local gen
 	local vs = {}
-	local nvs = 0
+	local gain
+	local freq, vel = 0, 0
 
-	local fn_note = function(onoff, note, vel)
-		local freq = 440 * math.pow(2, (note-57) / 12)
-		if onoff then
-			if max and nvs >= max then
-				local t_oldest, v_oldest = time(), nil
-				for v in pairs(vs) do
-					if v.t < t_oldest then
-						v_oldest, t_oldest = v, t_oldest
+	return Dsp:mkmod({
+		id = "poly",
+		description = "Polyphonic module",
+		controls = {
+			fn_update = function()
+
+				if #vs ~= count then
+					vs = {}
+					for i = 1, count do
+						vs[i] = { mod = gen(), free = true }
+					end
+					gain = 1 / count
+				end
+
+				if vel > 0 then
+					for i, v in pairs(vs) do
+						if v.free then
+							v.freq = freq
+							v.mod:set { f = freq, vel = vel }
+							v.free = false
+							break
+						end
+					end
+				else
+					for i, v in pairs(vs) do
+						if v.freq == freq then
+							v.mod:set { vel = 0 }
+							v.free = true
+						end
 					end
 				end
-				vs[v_oldest] = nil
-				nvs = nvs - 1
+			end,
+			{
+				id = "gen",
+				type = "generator",
+				description = "Generator module",
+				fn_set = function(v) gen = v end
+			}, {
+				id = "f",
+				description = "Frequency",
+				max = 20000,
+				log = true,
+				unit = "Hz",
+				default = 440,
+				fn_set = function(v) freq = v end
+			}, {
+				id = "vel",
+				description = "Velocity",
+				fn_set = function(v) vel = v end
+			}, {
+				id = "count",
+				description = "Voice count",
+				default = 5,
+				max = 10,
+				fn_set = function(v) count = math.floor(v+0.5) end
+			},
+		},
+		fn_gen = function()
+			local o = 0
+			for _, v in ipairs(vs) do
+				o = o + v.mod()
 			end
-			local v = {
-				t = time(),
-				note = note,
-				fn = fn_mod(freq, vel)
-			}
-			vs[v] = true
-			nvs = nvs + 1
-		else
-			for v in pairs(vs) do
-				if v.note == note then
-					v.fn("stop")
-				end
-			end
+			return o * gain
 		end
-	end
+	}, init)
 
-	local fn_dsp = function()
-		local o = 0
-		for v in pairs(vs) do
-			local p = v.fn()
-			if p then
-				o = o + p * 0.1
-			else
-				vs[v] = nil
-				nvs = nvs - 1
-			end
-		end
-		return o
-	end
-
-	return fn_note, fn_dsp
 end
 
 

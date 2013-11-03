@@ -89,7 +89,7 @@ local function jack_midi(jack, name, fn)
 		if t == 0x80 or t == 0x90 then
 			if midi.fn_note[ch] then
 				for fn in pairs(midi.fn_note[ch]) do
-					fn(t == 0x90, b2, b3)
+					fn(b2, t == 0x90 and b3 or 0)
 				end
 			end
 		elseif t == 0xb0 then

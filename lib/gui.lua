@@ -104,13 +104,12 @@ local cmd_handler = {
 			}
 
 			local function on_value_changed(s)
-				local fmt = control.fmt or "%.1f"
 				local val = s.adjustment.value
 				if control.log then
 					if val < 0.001 then val = 0.001 end
 					val = (control.max+1) ^ (val/control.max) - 1
 				end
-				val = fmt % val
+				val = control.fmt % val
 				label:set_text(val)
 				if not mute then
 					worker:tx { cmd = "set", data = {
@@ -206,7 +205,7 @@ local function handle_msg(worker, code)
 		if ok then
 			local h = cmd_handler[msg.cmd]
 			if h then
-				h(worker, msg.genid, msg.data)
+				h(worker, msg.modid, msg.data)
 			end
 		else
 			logf(LG_WRN, "ipc run error: %s", data, code)
@@ -352,7 +351,7 @@ local function gui_start(Gui)
 end
 
 
-local function gui_add_gen(gui, gen, label)
+local function gui_add_mod(gui, gen, label)
 
 	local controls = gen:controls()
 	local group = gui:add_group(label or gen.description)
@@ -377,7 +376,7 @@ local function new(Gui, gui_id)
 		-- methods
 
 		add_group = gui_add_group,
-		add_gen = gui_add_gen,
+		add_mod = gui_add_mod,
 
 		-- data
 

@@ -1,6 +1,6 @@
 
 -- 
--- A simple polyphonic synth, using DSP code to generate nodes on midi input
+-- DSP test
 --
 
 jack = Jack:new("worp")
@@ -16,20 +16,21 @@ rev = Dsp:reverb()
 gui = Gui:new("Worp")
 
 n = Dsp:noise()
-
+c = Dsp:const()
 
 f:map_cc(midi, 1, 1)
 rev:map_cc(midi, 1, 5)
 
 o:control("f"):map_note(midi, 1)
 
-gui:add_gen(o, "Flipje")
-gui:add_gen(f)
-gui:add_gen(lfo)
-gui:add_gen(rev)
+gui:add_mod(o, "Flipje")
+gui:add_mod(f)
+gui:add_mod(lfo)
+gui:add_mod(rev)
+gui:add_mod(c, "Noise level")
 
 jack:dsp("synth", 0, 2, function(t_, i1)
-	local v = f(o() * (1+n()*0.3)) * lfo() * 0.1
+	local v = f(o() * (1+n()*c()*10)) * lfo() * 0.1
 	return rev(v, v)
 end)
 

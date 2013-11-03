@@ -3,9 +3,7 @@ local Dsp = {}
 
 srate = 44100
 
-
-function Dsp:mkcontrol(def, gen)
-			
+function Dsp:mkcontrol(def, mod)
 
 	local control = {
 
@@ -17,7 +15,7 @@ function Dsp:mkcontrol(def, gen)
 		
 		set = function(control, value, update)
 			if control.type == "enum" and type(value) == "number" then
-				value = control.options[math.floor(value)]
+				value = control.options[math.floor(value + 0.5)]
 			end
 			if value then
 				control.value = value
@@ -25,7 +23,7 @@ function Dsp:mkcontrol(def, gen)
 					fn(value)
 				end
 				if update ~= false then
-					gen:update()
+					mod:update()
 				end
 			end
 		end,
@@ -62,6 +60,7 @@ function Dsp:mkcontrol(def, gen)
 		id = def.id or "",
 		description = def.description or "",
 		type = def.type or "number",
+		fmt = def.fmt or "%.1f",
 		min = def.min or 0,
 		max = def.max or 1,
 		options = def.options or {},
@@ -78,7 +77,7 @@ function Dsp:mkcontrol(def, gen)
 
 	setmetatable(control, {
 		__tostring = function()
-			return "Control:%s:%s(%s)" % { gen.id, control.id, control.value }
+			return "Control:%s:%s(%s)" % { mod.id, control.id, control.value }
 		end
 	})
 
@@ -90,43 +89,43 @@ function Dsp:mkcontrol(def, gen)
 end
 
 
-function Dsp:mkgen(def, init)
+function Dsp:mkmod(def, init)
 
-	local gen = {
+	local mod = {
 
 		-- methods
 		
-		update = function(gen)
-			if def.controls.fn_set then
-				def.controls.fn_set()
+		update = function(mod)
+			if def.controls.fn_update then
+				def.controls.fn_update()
 			end
 		end,
 
-		set = function(gen, id, value)
+		set = function(mod, id, value)
 			if type(id) == "table" then
 				for id, value in pairs(id) do
-					gen:control(id):set(value, false)
+					mod:control(id):set(value, false)
 				end
-				gen:update()
+				mod:update()
 			else
-				gen:control(id):set(value)
+				mod:control(id):set(value)
 			end
 		end,
 
-		controls = function(gen)
-			return gen.control_list
+		controls = function(mod)
+			return mod.control_list
 		end,
 
-		get = function(gen)
-			return gen
+		get = function(mod)
+			return mod
 		end,
 
-		control = function(gen, id)
-			return gen.control_list[id]
+		control = function(mod, id)
+			return mod.control_list[id]
 		end,
 
-		map_cc = function(gen, midi, ch, nr)
-			for i, control in ipairs(gen:controls()) do
+		map_cc = function(mod, midi, ch, nr)
+			for i, control in ipairs(mod:controls()) do
 				control:map_cc(midi, ch, nr+i-1)
 			end
 		end,
@@ -138,27 +137,53 @@ function Dsp:mkgen(def, init)
 		control_list = {}
 	}
 	
-	setmetatable(gen, {
+	setmetatable(mod, {
 		__tostring = function()
 			return "Generator:%s" % { def.id }
 		end,
 		__call = function(_, ...)
-			return def.fn_gen(gen, ...)
+			return def.fn_gen(mod, ...)
 		end,
 	})
 
 	for i, def in ipairs(def.controls) do
-		local control = Dsp:mkcontrol(def, gen)
-		gen.control_list[i] = control
-		gen.control_list[control.id] = control
+		local control = Dsp:mkcontrol(def, mod)
+		mod.control_list[i] = control
+		mod.control_list[control.id] = control
 		if init then
 			control:set(init[control.id], false)
 		end
 	end
 
-	gen:update()
+	mod:update()
 
-	return gen
+	return mod
+end
+
+
+function Dsp:const(init)
+
+	local c
+
+	return Dsp:mkmod({
+		id = "const",
+		description = "Constant value",
+		controls = {
+			{
+				id = "c",
+				description = "Value",
+				default = 1,
+				fmt = "%0.2f",
+				fn_set = function(val) c = val end,
+			},
+		},
+
+		fn_gen = function()
+			return c
+		end
+
+	}, init)
+
 end
 
 
@@ -185,7 +210,7 @@ function Dsp:noise(init)
 		return 2 * random() - 1
 	end
 	
-	return Dsp:mkgen({
+	return Dsp:mkmod({
 		id = "noise",
 		description = "Noise generator",
 		controls = {
@@ -236,7 +261,7 @@ function Dsp:osc(init)
 	local sin = math.sin
 	local i, di = 0, 0
 
-	return Dsp:mkgen({
+	return Dsp:mkmod({
 		id = "osc",
 		description = "Sine oscillator",
 		controls = {
@@ -264,7 +289,7 @@ function Dsp:saw(init)
 
 	local v, dv = 0, 0
 
-	return Dsp:mkgen({
+	return Dsp:mkmod({
 		id = "saw",
 		description = "Saw tooth oscillator",
 		controls = {
@@ -305,7 +330,7 @@ function Dsp:adsr(init)
 	local dv_A, dv_D, dv_R, level_S = 0, 0, 0, 1
 	local dv = {}
 
-	return Dsp:mkgen({
+	return Dsp:mkmod({
 		id = "adsr",
 		description = "ADSR envelope generator",
 		controls = {
@@ -315,7 +340,7 @@ function Dsp:adsr(init)
 				type = "enum",
 				options = "true,false",
 				default = "true",
-				fn_set = function(val)
+				fn_update = function(val)
 					if val and  state == nil then
 						state, dv = "A", dv_A
 					end
@@ -391,11 +416,11 @@ function Dsp:filter(init)
 
 	local type, f, Q, gain
 
-	return Dsp:mkgen({
+	return Dsp:mkmod({
 		id = "filter",
 		description = "Biquad multi-mode filter",
 		controls = {
-			fn_set = function()
+			fn_update = function()
 				local w0 = 2 * math.pi * (f / fs)
 				local alpha = math.sin(w0) / (2*Q)
 				local cos_w0 = math.cos(w0)
@@ -445,7 +470,7 @@ function Dsp:filter(init)
 				id = "type",
 				description = "Filter type",
 				type = "enum",
-				options =  { "lp", "hp", "bp", "bs", "ls", "hs", "eq" },
+				options =  { "lp", "hp", "bp", "bs", "ls", "hs", "eq","ap" },
 				default = "lp",
 				fn_set = function(val) type = val end
 			}, {
@@ -554,11 +579,11 @@ function Dsp:reverb(init)
 
 	local arg_wet, arg_dry, arg_room, arg_damp
 
-	return Dsp:mkgen({
+	return Dsp:mkmod({
 		id = "reverb",
 		description = "Freeverb reverb",
 		controls = {
-			fn_set = function()
+			fn_update = function()
 				local initialroom = arg_room 
 				local initialdamp = arg_damp 
 				local initialwet = arg_wet/scalewet
@@ -586,22 +611,26 @@ function Dsp:reverb(init)
 				id = "wet",
 				description = "Wet volume",
 				default = "0.5",
+				fmt = "%0.2f",
 				fn_set = function(val) arg_wet = val end
 			}, {
 				id = "dry",
 				description = "Dry volume",
 				default = "0.5",
+				fmt = "%0.2f",
 				fn_set = function(val) arg_dry = val end
 			}, {
 				id = "room",
 				description = "Room size",
 				max = 1.1,
 				default = "0.5",
+				fmt = "%0.2f",
 				fn_set = function(val) arg_room = val end
 			}, {
 				id = "damp",
 				description = "Damping",
 				default = "0.5",
+				fmt = "%0.2f",
 				fn_set = function(val) arg_damp = val end
 			}
 		},
@@ -656,7 +685,7 @@ function Dsp:poly(fn_gen, max)
 			local v = {
 				t = time(),
 				note = note,
-				fn = fn_gen(freq, vel)
+				fn = fn_mod(freq, vel)
 			}
 			vs[v] = true
 			nvs = nvs + 1

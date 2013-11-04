@@ -45,7 +45,7 @@ function Dsp:mkcontrol(def, mod)
 		id = def.id or "",
 		description = def.description or "",
 		type = def.type or "number",
-		fmt = def.fmt or "%.1f",
+		fmt = def.fmt,
 		min = def.min or 0,
 		max = def.max or 1,
 		options = def.options or {},
@@ -593,26 +593,26 @@ function Dsp:reverb(init)
 			{
 				id = "wet",
 				description = "Wet volume",
-				default = "0.5",
+				default = 0.5,
 				fmt = "%0.2f",
 				fn_set = function(val) arg_wet = val end
 			}, {
 				id = "dry",
 				description = "Dry volume",
-				default = "0.5",
+				default = 0.5,
 				fmt = "%0.2f",
 				fn_set = function(val) arg_dry = val end
 			}, {
 				id = "room",
 				description = "Room size",
 				max = 1.1,
-				default = "0.5",
+				default = 0.5,
 				fmt = "%0.2f",
 				fn_set = function(val) arg_room = val end
 			}, {
 				id = "damp",
 				description = "Damping",
-				default = "0.5",
+				default = 0.5,
 				fmt = "%0.2f",
 				fn_set = function(val) arg_damp = val end
 			}

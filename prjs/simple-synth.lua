@@ -8,7 +8,7 @@ gui = Gui:new("worp")
 fs = Fluidsynth:new("worp", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
 ls = Linuxsampler:new("worp", "/opt/samples")
 
-piano = ls:add("megapiano.gig")
+piano = ls:add("grand.gig", 1)
 
 
 midi = jack:midi("midi")
@@ -31,7 +31,7 @@ function voice()
 
 	return Dsp:mkmod({
 		id = "synth",
-		description = "Sine oscillator",
+		description = "Simple synth",
 		controls = {
 			{
 				id = "f",
@@ -62,12 +62,10 @@ function voice()
 end
 
 
-local v, synth = Dsp:poly { gen = voice }
-
+v, synth = Dsp:poly { gen = voice }
 
 midi:map_instr(1, piano)
-midi:map_instr(2, synth)
-
+midi:map_instr(5, synth)
 
 jack:dsp("worp", 0, 1, function()
 	return v()

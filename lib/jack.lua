@@ -71,9 +71,10 @@ local function jack_midi(jack, name, fn)
 			midi.fn_cc[ch][nr][fn] = true
 		end,
 
-		map_instr = function(midi, ch, instr)
+		map_instr = function(midi, ch, instr, offset)
+			offset = offset or 0
 			midi:on_note(ch, function(note, vel)
-				instr(note, vel/127)
+				instr(note + offset, vel/127)
 			end)
 		end,
 

@@ -38,11 +38,15 @@ end
 
 local function add(fluidsynth, prog)
 
-	prog = prog or 1
-	local ch = fluidsynth.channels
-	fluidsynth.channels = fluidsynth.channels + 1
-
-	fs.fluid_synth_program_change(fluidsynth.synth, ch, prog)
+	local ch
+	if prog == 127 then
+		ch = 9
+	else
+		prog = prog or 9
+		ch = fluidsynth.channels
+		fluidsynth.channels = fluidsynth.channels + 1
+		fs.fluid_synth_program_change(fluidsynth.synth, ch, prog)
+	end
 
 	return function(note, vel)
 		if vel > 0 then

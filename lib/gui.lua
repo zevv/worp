@@ -5,6 +5,107 @@
 
 local lgi, GLib, Gtk, Gdk 
 
+--
+-- Implementation of knob widget
+--
+
+local function Knob(parm)
+
+	local size = 32
+	local w, h
+	local cx = size * 0.5
+	local cy = size * 0.5
+	local r = size * 0.35
+	local value = 0
+	local min = parm.lower
+	local max = parm.upper
+	local range = max - min
+	local drag_x, drag_y, dragging = 0, 0, false
+	
+	local da = Gtk.DrawingArea { 
+		width = size,
+		height = size,
+		can_focus = true,
+	}
+	
+	local knob = {
+
+		da = da,
+
+		set_value = function(knob, v)
+			v = math.max(v, min)
+			v = math.min(v, max)
+			value = v
+			da.window:invalidate_rect(nil)
+			parm.on_value_changed(knob)
+		end,
+
+		get_value = function(knob)
+			return value 
+		end
+	}
+
+	local sc = da:get_style_context()
+
+	function da:on_draw(cr)
+		cr:arc(cx, cy, r, 0, 6.28)
+		cr:fill()
+		local function lr(a, r1, r2)
+			local x, y = math.cos(a), math.sin(a)
+			cr:move_to(cx + x * r * r1, cy + y * r * r1)
+			cr:line_to(cx + x * r * r2, cy + y * r * r2)
+			cr:stroke()
+		end
+		for i = 0, 1, 0.1 do
+			lr(i*5 + 2.25, 1.1, 1.5)
+		end
+		cr:set_source_rgb(1, 1, 1)
+		lr((value - min) / range *5 + 2.25, 0, 1)
+		if da.has_focus then
+			Gtk.render_focus(sc, cr, 0, 0, w, h)
+		end
+	end
+
+	function da:on_configure_event(event)
+		w, h = self.allocation.width, self.allocation.height
+		cx, cy = w/2, h/2
+		return true
+	end
+
+	function da:on_motion_notify_event(event)
+		local _, x, y, state = event.window:get_device_position(event.device)
+		
+		if state.BUTTON1_MASK then da.has_focus = true end
+		if not dragging and state.BUTTON1_MASK then dragging, drag_x, drag_y = true, x, y end
+		if dragging and not state.BUTTON1_MASK then dragging = false end
+
+		if dragging then
+			local dy = drag_y - y
+			knob:set_value(value + dy * range / 100)
+			da.window:invalidate_rect(nil)
+			drag_y = y
+		end
+	end
+
+	function da:on_key_press_event(event)
+		local k = event.keyval
+		if k == Gdk.KEY_Up then knob:set_value(value + parm.step_increment) return true end
+		if k == Gdk.KEY_Down then knob:set_value(value - parm.step_increment) return true end
+		if k == Gdk.KEY_Page_Up then knob:set_value(value + parm.page_increment) return true end
+		if k == Gdk.KEY_Page_Down then knob:set_value(value - parm.page_increment) return true end
+	end
+
+	da:add_events(Gdk.EventMask {
+		'KEY_PRESS_MASK',
+		'LEAVE_NOTIFY_MASK',
+		'BUTTON_PRESS_MASK',
+		'POINTER_MOTION_MASK',
+		'POINTER_MOTION_HINT_MASK' })
+
+	return knob
+
+end
+
 
 
 local cmd_handler = {
@@ -12,17 +113,17 @@ local cmd_handler = {
 	new = function(worker, id, data)
 
 		local window = Gtk.Window {
+			--resizable = false,
 			title = data.gui_id,
-			width = 400,
 			Gtk.Box {
 				id = "box",
 				border_width = 4,
-				orientation = 'VERTICAL', 
+				orientation = 'HORIZONTAL', 
 				{
 					Gtk.Label {
 						use_markup = true,
 						label = "<b>" .. data.gui_id .. "</b>",
-					}
+					},
 				}
 			}
 		}
@@ -49,8 +150,8 @@ local cmd_handler = {
 				margin = 5,
 				Gtk.Grid {
 					margin = 5,
-					row_spacing = 5,
 					column_spacing = 5,
+					expand = false,
 					id = data.group_id,
 				}
 			}
@@ -59,7 +160,7 @@ local cmd_handler = {
 		gui.window:show_all()
 	
 		gui.group_list[data.group_id] = {
-			y = 0,
+			index = 0,
 			control_list = {}
 		}
 
@@ -74,19 +175,18 @@ local cmd_handler = {
 		local window = gui.window
 		local grid = window.child[data.group_id]
 
-		local y = group.y
-		group.y = group.y + 1
+		local x = group.index
+		group.index = group.index + 1
 
 		local control = data.control
 		local mute = false
 		local fn_set = function(v) end
 		
 		grid:add {
-			left_attach = 0, top_attach = y,
+			left_attach = x, top_attach = 0,
 			Gtk.Label {
-				label = control.description,
-				halign = 'START',
-				valign = 'END',
+				label = control.id,
+				halign = 'CENTER',
 			}
 		}
 
@@ -100,16 +200,19 @@ local cmd_handler = {
 			}
 
 			local label = Gtk.Label {
-				halign = 'END',
+				halign = 'CENTER',
 			}
 
-			local function on_value_changed(s)
-				local val = s.adjustment.value
+			local function on_value_changed(knob)
+				local val = knob:get_value()
 				if control.log then
 					if val < 0.001 then val = 0.001 end
 					val = (control.max+1) ^ (val/control.max) - 1
 				end
-				label:set_text(control.fmt % val)
+				local fmt = "%d"
+				if math.abs(val) < 100 then fmt = "%.1f" end
+				if math.abs(val) < 10 then fmt = "%.2f" end
+				label:set_text((control.fmt or fmt)% val)
 				if not mute then
 					worker:tx { cmd = "set", data = {
 						uid = data.uid,
@@ -118,37 +221,33 @@ local cmd_handler = {
 				end
 			end
 
+			local knob = Knob {
+				lower = control.min,
+				upper = control.max,
+				step_increment = (control.max-control.min)/1000,
+				page_increment = (control.max-control.min)/10,
+				on_value_changed = on_value_changed,
+			}
+
+			grid:add {
+				left_attach = x, top_attach = 1,
+				knob.da 
+			}
+
+			grid:add {
+				left_attach = x, top_attach = 2,
+				label,
+			}
+
 			fn_set = function(val)
 				if control.log then
 					val = (control.max) * math.log(val+1) / math.log(control.max)
 				end
 				mute = true
-				adjustment:set_value(val)
+				knob:set_value(val)
 				mute = false
 			end
 
-			grid:add {
-				left_attach = 1, top_attach = y,
-				Gtk.Scale {
-					adjustment = adjustment,
-					hexpand = true,
-					draw_value = false,
-					on_value_changed = on_value_changed
-				}
-			}
-
-			grid:add {
-				left_attach = 3, top_attach = y,
-				label,
-			}
-
-			grid:add {
-				left_attach = 4, top_attach = y,
-				Gtk.Label {
-					label = control.unit or "",
-					halign = 'START',
-				},
-			}
 
 		elseif control.type == "enum" then
 
@@ -162,7 +261,7 @@ local cmd_handler = {
 			}
 
 			grid:add {
-				left_attach = 1, top_attach = y,
+				left_attach = x, top_attach = 1,
 				combo
 			}
 
@@ -222,7 +321,7 @@ local function gui_main(fd)
 
 	lgi = require "lgi"
 	GLib, Gtk, Gdk = lgi.GLib, lgi.Gtk, lgi.Gdk
-		
+	
 	local worker = {
 
 		-- methods

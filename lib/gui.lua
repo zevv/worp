@@ -11,11 +11,11 @@ local lgi, GLib, Gtk, Gdk
 
 local function Knob(parm)
 
-	local size = 32
+	local size = 40
 	local w, h
 	local cx = size * 0.5
 	local cy = size * 0.5
-	local r = size * 0.35
+	local r = size * 0.45
 	local value = 0
 	local min = parm.lower
 	local max = parm.upper
@@ -48,22 +48,51 @@ local function Knob(parm)
 	local sc = da:get_style_context()
 
 	function da:on_draw(cr)
-		cr:arc(cx, cy, r, 0, 6.28)
-		cr:fill()
-		local function lr(a, r1, r2)
+
+		local function v2a(v)
+			return (v - min) / range * 5 + 2.25
+		end
+
+		local function l(v, r1, r2)
+			local a = v2a(v)
 			local x, y = math.cos(a), math.sin(a)
 			cr:move_to(cx + x * r * r1, cy + y * r * r1)
 			cr:line_to(cx + x * r * r2, cy + y * r * r2)
 			cr:stroke()
 		end
-		for i = 0, 1, 0.1 do
-			lr(i*5 + 2.25, 1.1, 1.5)
-		end
-		cr:set_source_rgb(1, 1, 1)
-		lr((value - min) / range *5 + 2.25, 0, 1)
-		if da.has_focus then
-			Gtk.render_focus(sc, cr, 0, 0, w, h)
-		end
+		
+		cr:set_line_width(1)
+
+		cr:arc(cx, cy, r, 0, 6.28)
+		cr:set_source_rgb(0.7, 0.7, 0.7)
+		cr:fill_preserve()
+		cr:set_source_rgb(0.9, 0.9, 0.9)
+		cr:stroke()
+		
+		cr:arc(cx, cy, r*0.7, 0, 6.28)
+		cr:set_source_rgb(0.5, 0.5, 0.5)
+		cr:fill_preserve()
+		cr:set_source_rgb(0.3, 0.3, 0.3)
+		cr:stroke()
+		
+		cr:set_line_width(2)
+		local a1, a2 = v2a(0), v2a(value)
+		cr:arc(cx, cy, r*0.85, math.min(a1, a2), math.max(a1, a2))
+		cr:set_source_rgb(0.0, 1.0, 0.0)
+		cr:stroke()
+
+		cr:set_line_width(1)
+		cr:set_source_rgb(0.0, 0.0, 0.0)
+		l(min, 0.8, 0.9)
+		l(max, 0.8, 0.9)
+		l(0, 0.8, 0.9)
+		
+		cr:set_line_width(3)
+		cr:set_source_rgb(1.0, 1.0, 1.0)
+		l(value, 0, 0.6)
+		
+		cr:set_line_width(1)
+
 	end
 
 	function da:on_configure_event(event)
@@ -117,7 +146,7 @@ local cmd_handler = {
 			title = data.gui_id,
 			Gtk.Box {
 				id = "box",
-				border_width = 4,
+				valign = 'START',
 				orientation = 'HORIZONTAL', 
 				{
 					Gtk.Label {
@@ -146,12 +175,9 @@ local cmd_handler = {
 		gui.window.child.box:add {
 			Gtk.Frame {
 				label = data.label,
-				shadow_type = 'OUT',
 				margin = 5,
 				Gtk.Grid {
-					margin = 5,
-					column_spacing = 5,
-					expand = false,
+					column_spacing = 8,
 					id = data.group_id,
 				}
 			}

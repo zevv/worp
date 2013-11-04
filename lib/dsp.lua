@@ -401,7 +401,7 @@ function Dsp:filter(init)
 
 	return Dsp:mkmod({
 		id = "filter",
-		description = "Biquad multi-mode filter",
+		description = "Biquad filter",
 		controls = {
 			fn_update = function()
 				local w0 = 2 * math.pi * (f / fs)
@@ -564,7 +564,7 @@ function Dsp:reverb(init)
 
 	return Dsp:mkmod({
 		id = "reverb",
-		description = "Freeverb reverb",
+		description = "Reverb",
 		controls = {
 			fn_update = function()
 				local initialroom = arg_room 

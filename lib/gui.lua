@@ -93,6 +93,10 @@ local function Knob(parm)
 		
 		cr:set_line_width(1)
 
+		if da.has_focus then
+			Gtk.render_focus(sc, cr, 0, 0, w, h)
+		end
+
 	end
 
 	function da:on_configure_event(event)

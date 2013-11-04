@@ -104,11 +104,23 @@ local function Knob(parm)
 		cx, cy = w/2, h/2
 		return true
 	end
+	
+	function da:on_scroll_event(event)
+		local d = 0
+		if event.direction == 'UP'   then d =  parm.page_increment end
+		if event.direction == 'DOWN' then d = -parm.page_increment end
+		if event.state.SHIFT_MASK then d = d / 10 end
+		if event.state.CONTROL_MASK then d = d * 10 end
+		knob:set_value(value + d)
+	end
+	
+	function da:on_button_press_event(event)
+		da.has_focus = true 
+	end
 
 	function da:on_motion_notify_event(event)
 		local _, x, y, state = event.window:get_device_position(event.device)
-		
-		if state.BUTTON1_MASK then da.has_focus = true end
+
 		if not dragging and state.BUTTON1_MASK then dragging, drag_x, drag_y = true, x, y end
 		if dragging and not state.BUTTON1_MASK then dragging = false end
 
@@ -121,15 +133,21 @@ local function Knob(parm)
 	end
 
 	function da:on_key_press_event(event)
+		local d = 0
 		local k = event.keyval
-		if k == Gdk.KEY_Up then knob:set_value(value + parm.step_increment) return true end
-		if k == Gdk.KEY_Down then knob:set_value(value - parm.step_increment) return true end
-		if k == Gdk.KEY_Page_Up then knob:set_value(value + parm.page_increment) return true end
-		if k == Gdk.KEY_Page_Down then knob:set_value(value - parm.page_increment) return true end
+		if k == Gdk.KEY_Up then d = parm.step_increment end
+		if k == Gdk.KEY_Down then d = -parm.step_increment end
+		if k == Gdk.KEY_Page_Up then d = parm.page_increment end
+		if k == Gdk.KEY_Page_Down then d = -parm.page_increment end
+		if event.state.SHIFT_MASK then d = d / 10 end
+		if event.state.CONTROL_MASK then d = d * 10 end
+		knob:set_value(value + d)
 	end
 
 	da:add_events(Gdk.EventMask {
+		'SCROLL_MASK',
 		'KEY_PRESS_MASK',
+		'BUTTON_PRESS_MASK',
 		'LEAVE_NOTIFY_MASK',
 		'BUTTON_PRESS_MASK',
 		'POINTER_MOTION_MASK',
@@ -221,13 +239,6 @@ local cmd_handler = {
 		}
 
 		if control.type == "number" then
-		
-			local adjustment = Gtk.Adjustment {
-				lower = control.min,
-				upper = control.max,
-				step_increment = (control.max-control.min)/1000,
-				page_increment = (control.max-control.min)/10,
-			}
 
 			local label = Gtk.Label {
 				halign = 'CENTER',
@@ -254,7 +265,7 @@ local cmd_handler = {
 			local knob = Knob {
 				lower = control.min,
 				upper = control.max,
-				step_increment = (control.max-control.min)/1000,
+				step_increment = (control.max-control.min)/100,
 				page_increment = (control.max-control.min)/10,
 				on_value_changed = on_value_changed,
 			}

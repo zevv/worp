@@ -149,6 +149,36 @@ function Dsp:mkmod(def, init)
 end
 
 
+function Dsp:dist(init)
+
+	local l, il
+
+	return Dsp:mkmod({
+		id = "dist",
+		description = "Dist",
+		controls = {
+			{
+				id = "level",
+				description = "Level",
+				min = 1,
+				max = 50,
+				default = 1,
+				fn_set = function(val) 
+					l = val 
+					il = 1/val
+				end,
+			},
+		},
+
+		fn_gen = function(_, i)
+			return math.tanh(i*l) * il
+		end
+
+	}, init)
+
+end
+
+
 function Dsp:const(init)
 
 	local c

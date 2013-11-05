@@ -54,7 +54,13 @@ end
 -- callback function
 --
 
-local function jack_midi(jack, name, fn)
+local function jack_midi(jack, name)
+
+	name = name or "midi"
+
+	if jack.midi_list[name] then
+		return jack.midi_list[name]
+	end
 
 	local midi = {
 
@@ -132,6 +138,7 @@ local function jack_midi(jack, name, fn)
 			
 	end)
 
+	jack.midi_list[name] = midi
 	return midi
 
 end

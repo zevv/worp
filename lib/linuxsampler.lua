@@ -37,11 +37,12 @@ local function add(ls, fname, index)
 	local ch = ls:cmd("ADD CHANNEL")
 	ls:cmd("LOAD ENGINE gig %s" % ch)
 	ls:cmd("SET CHANNEL AUDIO_OUTPUT_DEVICE %s %s" % { ch, ls.audio_dev })
+	logf(LG_INF, "Loading instrument %s...", fname)
 	ls:cmd("LOAD INSTRUMENT %q %s %s" % { fname, index or 0, ch })
 
 	local info = ls:cmd("GET CHANNEL INFO %s" % ch)
 	local inst = info:match("INSTRUMENT_NAME: ([^\n\r]+)") or "-"
-	logf(LG_INF, "linuxsampler channel %s: %s", ch, inst)
+	logf(LG_INF, " channel %s: %s", ch, inst)
 	
 	return function(key, vel)
 		if vel > 0 then

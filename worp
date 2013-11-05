@@ -33,7 +33,12 @@ logf_init(opt.l or "")
 --
 
 for _, fname in ipairs(arg) do
-	sandbox_load(io.open(fname):read("*a"), fname .. ":1")
+	local fd, err = io.open(fname)
+	if fd then
+		sandbox_load(fd:read("*a"), fname .. ":1")
+	else
+		logf(LG_WRN, "Could not open %s: %s", fname, err)
+	end
 end
 
 

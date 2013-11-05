@@ -4,15 +4,12 @@
 --
 
 jack = Jack:new("worp")
-fs = Fluidsynth:new("synth", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
+ls = Linuxsampler:new("synth", "/opt/samples")
 
-midi = jack:midi(1)
+midi = jack:midi()
 
-piano = fs:add(1)
-drum = fs:add(127)
-
+piano = ls:add("piano/Bosendorfer.gig", 0)
 midi:map_instr(1, piano)
-midi:map_instr(2, drum)
 
 jack:connect("synth")
 jack:connect("worp")

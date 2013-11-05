@@ -71,10 +71,20 @@ local function jack_midi(jack, name, fn)
 			midi.fn_cc[ch][nr][fn] = true
 		end,
 
-		map_instr = function(midi, ch, instr, offset)
-			offset = offset or 0
+		map_instr = function(midi, ch, instr, mapping)
+			local t, fn_map = type(mapping)
+			if t == "number" then
+				fn_map = function(v) return v + mapping end
+			elseif t == "table" then
+				fn_map = function(v) return mapping[v] end
+			elseif t == "function" then
+				fn_map = mapping
+			else
+				fn_map = function(v) return v end
+			end
+
 			midi:on_note(ch, function(note, vel)
-				instr(note + offset, vel/127)
+				instr(fn_map(note), vel/127)
 			end)
 		end,
 
@@ -101,10 +111,11 @@ local function jack_midi(jack, name, fn)
 		local msg = P.read(midi.fd, 3)
 
 		local b1, b2, b3 = string.byte(msg, 1, #msg)
+		logf(LG_DMP, "%02x %02x %02x", b1, b2, b3)
 
 		local t = bit.band(b1, 0xf0)
 		local ch = bit.band(b1, 0x0f) + 1
-
+		
 		if t == 0x80 or t == 0x90 then
 			if midi.fn_note[ch] then
 				for fn in pairs(midi.fn_note[ch]) do

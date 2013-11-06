@@ -181,7 +181,7 @@ local cmd_handler = {
 				{
 					Gtk.Label {
 						use_markup = true,
-						label = "<b>" .. data.label .. "</b>",
+						label = data.label and "<b>" .. data.label .. "</b>" or nil,
 					},
 				}
 			}

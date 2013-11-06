@@ -4,6 +4,7 @@ package.path = package.path .. ";./lib/?.lua"
 package.cpath = package.cpath .. ";./lib/?.so;./app/?.so"
 _ENV = _G
 
+srate = 44100
 
 --
 -- Application libraries

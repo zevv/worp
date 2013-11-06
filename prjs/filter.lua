@@ -5,8 +5,8 @@
 
 jack = Jack:new("worp")
 
-f = Dsp:filter("bp", 1000, 5)
-r = Dsp:reverb()
+f = Dsp:Filter("bp", 1000, 5)
+r = Dsp:Reverb()
 
 jack:midi("midi", function(channel, t, d1, d2)
 	if t == "cc" then

@@ -1,5 +1,5 @@
 
-function autoload(parent, path)
+function autoload(id, parent, path)
 	
 	local function lookup(env, s)
 
@@ -11,7 +11,8 @@ function autoload(parent, path)
 		-- Check if it is a lib we can load
 
 		local fname = "%s/%s.lua" % { path, s }
-		if P.stat(fname) then
+		local stat = P.stat(fname)
+		if stat and stat.type == "regular" then
 			logf(LG_DBG, "Loading library %s", fname)
 			local chunk, err = loadfile(fname, "t", env)
 			if chunk then
@@ -24,6 +25,14 @@ function autoload(parent, path)
 			if v then return v end
 		end
 
+		-- Check if lib subdirectory
+
+		local fname = "%s/%s" % { path, s }
+		local stat = P.stat(fname)
+		if stat and stat.type == "directory" then
+			return autoload(path, sandbox.env, "lib/" .. s)
+		end
+
 		-- Fallback
 
 		return parent[s]
@@ -34,7 +43,10 @@ function autoload(parent, path)
 			v = lookup(env, s)
 			env[s] = v
 			return v
-		end
+		end,
+		__tostring = function(t)
+			return "Autoload library %q" % id
+		end,
 	})
 
 end

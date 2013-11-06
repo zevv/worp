@@ -80,6 +80,7 @@ function Dsp:Filter(init)
 				description = "Resonance",
 				min = 0.1,
 				max = 100,
+				log = true,
 				default = 1,
 				fn_set = function(val) Q = val end
 			}, {

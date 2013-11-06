@@ -14,6 +14,7 @@ o = Dsp:Saw { f = 100 }
 f = Dsp:Filter()
 lfo = Dsp:Osc { f = 5 }
 rev = Dsp:Reverb()
+pan = Dsp:Pan()
 
 gui = Gui:new("Worp")
 
@@ -30,10 +31,11 @@ gui:add_mod(f)
 gui:add_mod(lfo, "LFO")
 gui:add_mod(rev)
 gui:add_mod(c, "Noise")
+gui:add_mod(pan)
 
 jack:dsp("synth", 0, 2, function(t_, i1)
 	local v = f(o() * (1+n()*c()*10)) * lfo() * 0.1
-	return rev(v, v)
+	return pan(rev(v, v))
 end)
 
 -- Connect ports

@@ -197,16 +197,18 @@ local cmd_handler = {
 		local info = data.info
 		local mute = false
 
-		gui.window.child.box:add {
-			Gtk.Frame {
-				label = data.label,
-				margin = 5,
-				Gtk.Grid {
-					column_spacing = 8,
-					id = data.group_id,
-				}
+		local frame = Gtk.Frame {
+			label = data.label,
+			margin = 5,
+			Gtk.Grid {
+				column_spacing = 8,
+				id = data.group_id,
 			}
 		}
+
+		frame:set_label_align(0.5, 1)
+
+		gui.window.child.box:add(frame)
 		
 		gui.window:show_all()
 	

@@ -13,7 +13,7 @@ function Dsp:Control(def, mod)
 			if control.type == "enum" and type(value) == "number" then
 				value = control.options[math.floor(value + 0.5)]
 			end
-			if value then
+			if value ~= nil then
 				control.value = value
 				for fn in pairs(control.fn_set) do
 					fn(value)

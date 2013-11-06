@@ -204,9 +204,10 @@ local cmd_handler = {
 
 		local frame = Gtk.Frame {
 			label = data.label,
-			margin = 5,
+			margin = 4,
 			Gtk.Grid {
-				column_spacing = 8,
+				margin = 4,
+				column_spacing = 4,
 				id = data.group_id,
 			}
 		}
@@ -329,6 +330,28 @@ local cmd_handler = {
 					if v == o then combo:set_active(i-1) end
 				end
 			end
+
+		elseif control.type == "bool" then
+
+			local switch = Gtk.ToggleButton { 
+				label = " ",
+				on_toggled = function(s)
+					worker:tx { cmd = "set", data = {
+						uid = data.uid,
+						value = s:get_active()
+					}}
+				end
+			}
+
+			grid:add {
+				left_attach = x, top_attach = 1,
+				switch,
+			}
+			
+			fn_set = function(v)
+				switch:set_active(v)
+			end
+
 		end
 	
 		group.control_list[control.id] = {
@@ -376,7 +399,7 @@ local function gui_main(fd)
 
 	lgi = require "lgi"
 	GLib, Gtk, Gdk = lgi.GLib, lgi.Gtk, lgi.Gdk
-	
+
 	local worker = {
 
 		-- methods

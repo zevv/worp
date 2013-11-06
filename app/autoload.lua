@@ -1,4 +1,6 @@
 
+local mtime = {}
+
 function autoload(id, parent, path)
 	
 	local function lookup(env, s)

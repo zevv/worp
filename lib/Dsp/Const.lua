@@ -4,7 +4,7 @@ function Dsp:Const(init)
 	local c
 
 	return Dsp:Mod({
-		description = "Constant value",
+		description = "Const",
 		controls = {
 			{
 				id = "c",

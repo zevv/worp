@@ -15,7 +15,6 @@ function Dsp:Adsr(init)
 	local dv = 0
 
 	return Dsp:Mod({
-		id = "adsr",
 		description = "ADSR envelope generator",
 		controls = {
 			{

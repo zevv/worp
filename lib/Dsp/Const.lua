@@ -4,7 +4,6 @@ function Dsp:Const(init)
 	local c
 
 	return Dsp:Mod({
-		id = "const",
 		description = "Constant value",
 		controls = {
 			{

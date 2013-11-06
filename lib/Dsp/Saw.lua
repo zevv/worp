@@ -4,7 +4,6 @@ function Dsp:Saw(init)
 	local v, dv = 0, 0
 
 	return Dsp:Mod({
-		id = "saw",
 		description = "Saw tooth oscillator",
 		controls = {
 			{

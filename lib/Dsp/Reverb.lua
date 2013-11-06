@@ -69,7 +69,6 @@ function Dsp:Reverb(init)
 	local arg_wet, arg_dry, arg_room, arg_damp
 
 	return Dsp:Mod({
-		id = "reverb",
 		description = "Reverb",
 		controls = {
 			fn_update = function()

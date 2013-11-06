@@ -4,7 +4,6 @@ function Dsp:Pan(init)
 	local v1, v2
 
 	return Dsp:Mod({
-		id = "pan",
 		description = "Pan",
 		controls = {
 			{

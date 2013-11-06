@@ -11,7 +11,6 @@ function Dsp:Noise(init)
 	end
 	
 	return Dsp:Mod({
-		id = "noise",
 		description = "Noise generator",
 		controls = {
 			{

@@ -12,7 +12,6 @@ function Dsp:Poly(init)
 	local freq, vel = 0, 0
 
 	local mod = Dsp:Mod({
-		id = "poly",
 		description = "Polyphonic module",
 		controls = {
 			fn_update = function()

@@ -50,7 +50,6 @@ function Dsp:Pitchshift(init)
 	end
 	
 	return Dsp:Mod({
-		id = "pitchshift",
 		description = "Pitch shift",
 		controls = {
 			{

@@ -11,7 +11,6 @@ function Dsp:Filter(init)
 	local type, f, Q, gain
 
 	return Dsp:Mod({
-		id = "filter",
 		description = "Biquad filter",
 		controls = {
 			fn_update = function()

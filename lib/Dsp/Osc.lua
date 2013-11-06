@@ -5,7 +5,6 @@ function Dsp:Osc(init)
 	local i, di = 0, 0
 
 	return Dsp:Mod({
-		id = "osc",
 		description = "Sine oscillator",
 		controls = {
 			{

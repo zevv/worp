@@ -33,9 +33,8 @@ function Sandbox:new()
 		}
 	}
 
+	sandbox.env = autoload(_G, "lib")
 	sandbox.env._ENV = sandbox.env
-
-	autoload(sandbox.env, _G, "lib")
 
 	return sandbox
 end

@@ -1,6 +1,6 @@
 
-function autoload(tab, parent, path)
-
+function autoload(parent, path)
+	
 	local function lookup(env, s)
 
 		-- Check if parent provides
@@ -29,16 +29,9 @@ function autoload(tab, parent, path)
 		return parent[s]
 	end
 
-
-	setmetatable(tab, {
+	return setmetatable({}, {
 		__index = function(env, s)
-
-			-- Lookup symbol
-
 			v = lookup(env, s)
-			
-			-- Copy value into env for future use
-			
 			env[s] = v
 			return v
 		end

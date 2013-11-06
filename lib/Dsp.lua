@@ -1,5 +1,5 @@
 
-Dsp = {}
+Dsp = autoload(_ENV, "lib/Dsp")
 
 srate = 44100
 
@@ -147,9 +147,6 @@ function Dsp:Mod(def, init)
 
 	return mod
 end
-
-
-autoload(Dsp, _ENV, "lib/Dsp")
 
 
 return Dsp

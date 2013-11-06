@@ -27,10 +27,10 @@ midi:map_mod(1, 5, rev)
 f:help()
 
 gui:add_mod(o, "Osc")
-gui:add_mod(f)
 gui:add_mod(lfo, "LFO")
-gui:add_mod(rev)
 gui:add_mod(c, "Noise")
+gui:add_mod(f)
+gui:add_mod(rev)
 gui:add_mod(pan)
 
 jack:dsp("synth", 0, 2, function(t_, i1)

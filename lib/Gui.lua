@@ -254,13 +254,24 @@ local cmd_handler = {
 			local label = Gtk.Label {
 				halign = 'CENTER',
 			}
+	
+			local function k2v(v)
+				if control.log then
+					if v < 0.001 then v = 0.001 end
+					v = (control.max+1) ^ (v/control.max) - 1
+				end
+				return v
+			end
+			
+			local function v2k(v)
+				if control.log then
+					v = (control.max) * math.log(v+1) / math.log(control.max)
+				end
+				return v
+			end
 
 			local function on_value_changed(knob)
-				local val = knob:get_value()
-				if control.log then
-					if val < 0.001 then val = 0.001 end
-					val = (control.max+1) ^ (val/control.max) - 1
-				end
+				local val = k2v(knob:get_value())
 				local fmt = "%d"
 				if math.abs(val) < 100 then fmt = "%.1f" end
 				if math.abs(val) < 10 then fmt = "%.2f" end
@@ -277,9 +288,9 @@ local cmd_handler = {
 			end
 
 			local knob = Knob {
-				lower = control.min,
-				upper = control.max,
-				default = control.default or 0,
+				lower = v2k(control.min),
+				upper = v2k(control.max),
+				default = v2k(control.default),
 				step_increment = (control.max-control.min)/100,
 				page_increment = (control.max-control.min)/10,
 				on_value_changed = on_value_changed,
@@ -296,11 +307,8 @@ local cmd_handler = {
 			}
 
 			fn_set = function(val)
-				if control.log then
-					val = (control.max) * math.log(val+1) / math.log(control.max)
-				end
 				mute = true
-				knob:set_value(val)
+				knob:set_value(v2k(val))
 				mute = false
 			end
 

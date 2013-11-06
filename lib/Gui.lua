@@ -89,11 +89,13 @@ local function Knob(parm)
 		cr:set_source_rgb(0.0, 1.0, 0.0)
 		cr:stroke()
 
-		cr:set_line_width(1)
+		cr:set_line_width(2)
 		cr:set_source_rgb(0.0, 0.0, 0.0)
-		l(min, 0.8, 0.9)
-		l(max, 0.8, 0.9)
-		l(def, 0.8, 0.9)
+		l(min, 0.7, 0.9)
+		l(max, 0.7, 0.9)
+		if def ~= min and def ~= max then
+			l(def, 0.8, 0.9)
+		end
 		
 		cr:set_line_width(3)
 		cr:set_source_rgb(1.0, 1.0, 1.0)

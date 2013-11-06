@@ -6,14 +6,11 @@
 jack = Jack:new("worp")
 gui = Gui:new("worp")
 fs = Fluidsynth:new("worp", "/usr/share/sounds/sf2/FluidR3_GM.sf2")
-ls = Linuxsampler:new("worp", "/opt/samples")
-
-piano = ls:add("grand.gig", 1)
 
 
 midi = jack:midi("midi")
 
-c = Dsp:const()
+c = Dsp:Const()
 gui:add_mod(c)
 
 midi:map_mod(1, 1, c)
@@ -22,14 +19,14 @@ midi:map_mod(1, 1, c)
 
 function voice()
 
-	local osc = Dsp:saw()
-	local filter = Dsp:filter { type = "lp" }
-	local adsr = Dsp:adsr { A = 0.03, D = 0.03, S = 0.6, R = 0.6 }
-	local adsr2 = Dsp:adsr { A = 0.3, D = 0.8, S = 0.5, R = 0.6 }
-	local lfo = Dsp:osc { f = 6 }
+	local osc = Dsp:Saw()
+	local filter = Dsp:Filter { type = "lp" }
+	local adsr = Dsp:Adsr { A = 0.03, D = 0.03, S = 0.6, R = 0.6 }
+	local adsr2 = Dsp:Adsr { A = 0.3, D = 0.8, S = 0.5, R = 0.6 }
+	local lfo = Dsp:Osc { f = 6 }
 	local freq
 
-	return Dsp:mkmod({
+	return Dsp:Mod({
 		id = "synth",
 		description = "Simple synth",
 		controls = {
@@ -62,10 +59,9 @@ function voice()
 end
 
 
-v, synth = Dsp:poly { gen = voice }
+v, synth = Dsp:Poly { gen = voice }
 
-midi:map_instr(1, piano)
-midi:map_instr(5, synth)
+midi:map_instr(1, synth)
 
 jack:dsp("worp", 0, 1, function()
 	return v()

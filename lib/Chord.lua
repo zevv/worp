@@ -1,4 +1,6 @@
 
+Chord = {}
+
 local chord_list = {
 
 	-- triad chords
@@ -57,7 +59,7 @@ local diatonic_list = {
 }
 
 
-local function new(_, base, type, degree)
+function Chord:new(base, type, degree)
 	local ns = {}
 	local i = diatonic_list[type][degree]
 	for _, n in ipairs(chord_list[i[2]]) do
@@ -65,12 +67,6 @@ local function new(_, base, type, degree)
 	end
 	return ns
 end
-
-
-
-return {
-	new = new
-}
 
 -- vi: ft=lua ts=3 sw=3
 

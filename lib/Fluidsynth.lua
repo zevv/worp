@@ -1,4 +1,6 @@
 
+Fluidsynth = {}
+
 local ffi = require("ffi")
 
 local fs = ffi.load("fluidsynth")
@@ -63,7 +65,8 @@ end
 -- name
 --
 
-local function new(_, name, fname)
+
+function Fluidsynth:new(name, fname)
 
 	name = name or "Fluidsynth"
 
@@ -88,11 +91,6 @@ local function new(_, name, fname)
    return fluidsynth
 
 end
-
-
-return {
-   new = new,
-}
 
 -- vi: ft=lua ts=3 sw=3
 

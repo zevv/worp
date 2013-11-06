@@ -2,6 +2,8 @@
 
 package.path = package.path .. ";./lib/?.lua"
 package.cpath = package.cpath .. ";./lib/?.so;./app/?.so"
+_ENV = _G
+
 
 --
 -- Application libraries
@@ -9,37 +11,55 @@ package.cpath = package.cpath .. ";./lib/?.so;./app/?.so"
 
 P = require "luaposix"
 
-require "app.strict"
+--require "app.strict"
 require "app.log"
 require "app.misc"
 require "app.evq"
 require "app.sandbox"
 require "app.co"
 require "app.getopt"
+require "app.autoload"
 
 
 -- 
--- Main code
+-- Main 
 --
-
-sandbox_init()
 
 local opt, arg = getopt(arg, 'l:')
 
 logf_init(opt.l or "")
 
 --
--- Run any files passed as arguments
+-- Setup sandbox and load any files passed as arguments
 --
+
+sandbox = Sandbox:new()
 
 for _, fname in ipairs(arg) do
 	local fd, err = io.open(fname)
 	if fd then
-		sandbox_load(fd:read("*a"), fname .. ":1")
+		sandbox:load(fd:read("*a"), fname .. ":1")
 	else
 		logf(LG_WRN, "Could not open %s: %s", fname, err)
 	end
 end
+	
+
+-- 
+-- Open an UDP socket to receive Lua code chunks, and register to the 
+-- mail loop.
+--
+
+local s = P.socket(P.AF_INET, P.SOCK_DGRAM, 0)
+P.bind(s, { family = P.AF_INET, port = 9889, addr = "127.0.0.1" })
+
+watch_fd(s, function()
+	local code = P.recv(s, 65535)
+	local from, to, name = 1, 1, "?"
+	local f, t, n = code:match("\n%-%- live (%d+) (%d+) ([^\n]+)")
+	if f then from, to, name = f, t, n end
+	sandbox:load(code, "live " .. name .. ":" .. from)
+end)
 
 
 P.signal(P.SIGINT, os.exit)

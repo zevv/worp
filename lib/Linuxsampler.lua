@@ -1,4 +1,6 @@
 
+Linuxsampler = {}
+
 -- 
 -- Simple LSCP interface to configure and play linuxsampler. The code below
 -- implements a asynchronous interface to make sure not to block the main
@@ -72,7 +74,7 @@ end
 -- with the given name.
 --
 
-local function new(_, name, path)
+function Linuxsampler:new(name, path)
 
 	local fd, err = P.socket(P.AF_INET, P.SOCK_STREAM, 0)
 	if not fd then
@@ -142,11 +144,6 @@ local function new(_, name, path)
 	return ls
 
 end
-
-
-return {
-   new = new,
-}
 
 -- vi: ft=lua ts=3 sw=3
 

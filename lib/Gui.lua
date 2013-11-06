@@ -1,4 +1,6 @@
 
+Gui = {}
+
 --
 -- GUI process. This is a forked subprocess handling the GTK gui
 --
@@ -505,7 +507,7 @@ local function gui_add_mod(gui, gen, label)
 end
 
 
-local function new(Gui, gui_id)
+function Gui:new(gui_id)
 
 	if not Gui.pid then
 		gui_start(Gui)
@@ -531,9 +533,5 @@ local function new(Gui, gui_id)
 
 end
 
-
-return {
-   new = new,
-}
 
 -- vi: ft=lua ts=3 sw=3

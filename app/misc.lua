@@ -35,7 +35,7 @@ function safecall(fn, ...)
 		local msg = debug.traceback("Error: " .. err, 3)
 		print(fixup_error(msg))
 	end
-	if type(fn) == "string" then fn = sandbox_get(fn) end
+	if type(fn) == "string" then fn = sandbox:get(fn) end
 	return xpcall(fn, errhandler, ...)
 end
 

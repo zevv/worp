@@ -16,7 +16,7 @@ function rl(vs)
 	return vs[math.random(1, #vs)]
 end
 
-r = Dsp:reverb()
+r = Dsp:Reverb()
 
 jack:dsp("fx", 2, 2, function(t, i1, i2)
 	return r(i1, i2)

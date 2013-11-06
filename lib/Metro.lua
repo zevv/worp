@@ -1,7 +1,7 @@
 
-    
+Metro = {}    
 
-local function new(_, bpm, b)
+function Metro:new(bpm, b)
 	bpm, b = bpm or 120, b or 4
 	local spb = 60 / bpm 
 	local spm = spb * b
@@ -21,11 +21,6 @@ local function new(_, bpm, b)
 		end
 	}
 end
-
-
-return {
-   new = new,
-}
 
 -- vi: ft=lua ts=3 sw=3
 

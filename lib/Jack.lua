@@ -208,7 +208,9 @@ end
 -- Create new jack client with the given name
 --
 
-local function new(_, name)
+Jack = {}
+
+function Jack:new(_, name)
 	
 	local j, srate, bsize = jack_c.open(name or "worp")
 
@@ -233,11 +235,6 @@ local function new(_, name)
 	return jack
 
 end
-
-
-return {
-   new = new
-}
 
 -- vi: ft=lua ts=3 sw=3
 

@@ -1,3 +1,6 @@
+
+Mixer = {}
+
 local ffi = require("ffi")
 
 ffi.cdef [[
@@ -29,7 +32,7 @@ alsa.snd_mixer_selem_register(handle[0], ffi.NULL, ffi.NULL);
 alsa.snd_mixer_load(handle[0]);
 
 
-local function new(_, name)
+function Mixer:new(_, name)
 
    local sid = ffi.new("snd_mixer_selem_id_t *[1]")
    sid = ffi.new("snd_mixer_selem_id_t[1]")
@@ -46,11 +49,6 @@ local function new(_, name)
       end
    }
 end
-
-return {
-   new = new
-}
-
 
 -- vi: ft=lua ts=3 sw=3
 

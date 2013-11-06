@@ -8,15 +8,15 @@ midi = jack:midi("midi")
 
 -- Voice generator
 
-o = Dsp:saw { f = 100 }
-f = Dsp:filter()
-lfo = Dsp:osc { f = 5 }
-rev = Dsp:reverb()
+o = Dsp:Saw { f = 100 }
+f = Dsp:Filter()
+lfo = Dsp:Osc { f = 5 }
+rev = Dsp:Reverb()
 
 gui = Gui:new("Worp")
 
-n = Dsp:noise()
-c = Dsp:const()
+n = Dsp:Noise()
+c = Dsp:Const()
 
 midi:map_mod(1, 1, f)
 midi:map_mod(1, 5, rev)

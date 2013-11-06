@@ -1,11 +1,16 @@
 
 Gui = {}
 
+
 --
 -- GUI process. This is a forked subprocess handling the GTK gui
 --
 
 local lgi, GLib, Gtk, Gdk 
+
+local function random_id()
+	return "%08x" % math.random(0, 0xffffffff)
+end
 
 --
 -- Implementation of knob widget
@@ -176,7 +181,7 @@ local cmd_handler = {
 				{
 					Gtk.Label {
 						use_markup = true,
-						label = "<b>" .. data.gui_id .. "</b>",
+						label = "<b>" .. data.label .. "</b>",
 					},
 				}
 			}
@@ -410,7 +415,7 @@ end
 local function group_add_control(group, control, uid, fn_set)
 
 	group.gui.Gui:tx { cmd = "add_control", data = { 
-		gui_id = group.gui.gui_id, 
+		gui_id = group.gui.id, 
 		group_id = group.id, 
 		control = control,
 		uid = uid,
@@ -418,7 +423,7 @@ local function group_add_control(group, control, uid, fn_set)
 
 	local function set(val)
 		group.gui.Gui:tx { cmd = "set_control", data = { 
-			gui_id = group.gui.gui_id, 
+			gui_id = group.gui.id, 
 			group_id = group.id, 
 			control_id = control.id,
 			value = val
@@ -447,12 +452,12 @@ local function gui_add_group(gui, label)
 
 		gui = gui,
 		label = label,
-		id = "%08x" % math.random(0, 0xffffffff),
+		id = random_id(),
 	}
 
 	
 	gui.Gui:tx { cmd = "add_group", data = { 
-		gui_id = gui.gui_id, 
+		gui_id = gui.id, 
 		label = group.label,
 		group_id = group.id }}
 
@@ -505,7 +510,7 @@ local function gui_add_mod(gui, gen, label)
 	local controls = gen:controls()
 	local group = gui:add_group(label or gen.description)
 	for _, control in ipairs(controls) do
-		local uid = "%08x" % math.random(0, 0xffffffff)
+		local uid = random_id()
 		gui.Gui.uid_to_control[uid] = control
 		group:add_control(control, uid, function(v)
 			gen:set { [control.id] = v }
@@ -514,7 +519,7 @@ local function gui_add_mod(gui, gen, label)
 end
 
 
-function Gui:new(gui_id)
+function Gui:new(label)
 
 	if not Gui.pid then
 		gui_start(Gui)
@@ -529,12 +534,12 @@ function Gui:new(gui_id)
 
 		-- data
 
-		gui_id = gui_id,
+		id = random_id(),
 		Gui = Gui,
 
 	}
 	
-	gui.Gui:tx { cmd = "new", data = { gui_id = gui_id } }
+	gui.Gui:tx { cmd = "new", data = { gui_id = gui.id, label = label } }
 
 	return gui
 

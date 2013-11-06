@@ -58,7 +58,7 @@ function Dsp:Control(def, mod)
 
 	setmetatable(control, {
 		__tostring = function()
-			return "Control:%s:%s(%s)" % { mod.id, control.id, control.value }
+			return "control:%s(%s)" % { control.id, control.value }
 		end
 	})
 
@@ -108,7 +108,7 @@ function Dsp:Mod(def, init)
 		end,
 
 		help = function(mod)
-			print("%s: %s" % { mod.id, mod.description })
+			print(mod.description)
 			for _, control in ipairs(mod:controls()) do
 				print(" - %s: %s (%s)" % { control.id, control.description, control.unit or "" })
 			end

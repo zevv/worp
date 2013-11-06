@@ -51,7 +51,7 @@ function Dsp:Mod(def, init)
 	
 	setmetatable(mod, {
 		__tostring = function()
-			return "Generator:%s" % { def.id }
+			return "mod:%s" % { def.description }
 		end,
 		__call = function(_, ...)
 			return def.fn_gen(mod, ...)

@@ -19,11 +19,12 @@ local function Knob(parm)
 	local cy = size * 0.5
 	local r = size * 0.45
 	local value = 0
+	local def = parm.default
 	local min = parm.lower
 	local max = parm.upper
 	local range = max - min
 	local drag_x, drag_y, dragging = 0, 0, false
-	
+		
 	local da = Gtk.DrawingArea { 
 		width = size,
 		height = size,
@@ -87,7 +88,7 @@ local function Knob(parm)
 		cr:set_source_rgb(0.0, 0.0, 0.0)
 		l(min, 0.8, 0.9)
 		l(max, 0.8, 0.9)
-		l(0, 0.8, 0.9)
+		l(def, 0.8, 0.9)
 		
 		cr:set_line_width(3)
 		cr:set_source_rgb(1.0, 1.0, 1.0)
@@ -255,7 +256,10 @@ local cmd_handler = {
 				local fmt = "%d"
 				if math.abs(val) < 100 then fmt = "%.1f" end
 				if math.abs(val) < 10 then fmt = "%.2f" end
-				label:set_text((control.fmt or fmt)% val)
+				if control.unit then
+					fmt = fmt .. " " .. control.unit
+				end
+				label:set_text((control.fmt or fmt) % val)
 				if not mute then
 					worker:tx { cmd = "set", data = {
 						uid = data.uid,
@@ -267,6 +271,7 @@ local cmd_handler = {
 			local knob = Knob {
 				lower = control.min,
 				upper = control.max,
+				default = control.default or 0,
 				step_increment = (control.max-control.min)/100,
 				page_increment = (control.max-control.min)/10,
 				on_value_changed = on_value_changed,

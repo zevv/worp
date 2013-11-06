@@ -22,6 +22,8 @@ function autoload(id, parent, path)
 				if not ok then
 					logf(LG_WRN, "%s", err)
 				end
+			else
+				logf(LG_WRN, "%s", err)
 			end
 			local v = rawget(env, s)
 			if v then return v end

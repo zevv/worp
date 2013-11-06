@@ -64,9 +64,26 @@ end
 -- Exit event loop
 --
 
+local stop_list = {}
+
 function stop()
+	for fn in pairs(stop_list) do
+		fn()
+	end
 	running = false
 end
+
+
+function on_stop(fn)
+	stop_list[fn] = true
+end
+
+
+P.signal(P.SIGINT, function()
+	print("")
+	running = false
+end)
+
 
 --
 -- Run the main event loop, scheduling timers and handling file descriptors

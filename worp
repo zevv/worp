@@ -63,10 +63,11 @@ watch_fd(s, function()
 end)
 
 
-P.signal(P.SIGINT, os.exit)
-
 logf(LG_INF, "Ready")
 
 mainloop()
+stop()
+
+logf(LG_INF, "Bye")
 
 -- vi: ft=lua ts=3 sw=3

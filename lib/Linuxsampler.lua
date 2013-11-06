@@ -45,6 +45,8 @@ local function add(ls, fname, index)
 	local info = ls:cmd("GET CHANNEL INFO %s" % ch)
 	local inst = info:match("INSTRUMENT_NAME: ([^\n\r]+)") or "-"
 	logf(LG_INF, " channel %s: %s", ch, inst)
+
+	ls.channel_list[ch] = info
 	
 	return function(key, vel)
 		if vel > 0 then
@@ -62,8 +64,7 @@ end
 --
 
 local function reset(ls)
-	local cs = ls:cmd("LIST CHANNELS")
-	for c in cs:gmatch("%d+") do
+	for c in pairs(ls.channel_list) do
 		ls:cmd("SEND CHANNEL MIDI_DATA CC %s 120 0" % c)
 	end
 end
@@ -100,6 +101,7 @@ function Linuxsampler:new(name, path)
 		path = path or "",
 		fd = fd,
 		tx_queue = {},
+		channel_list = {},
 		rx_buf = "",
 
 	}
@@ -141,9 +143,16 @@ function Linuxsampler:new(name, path)
 		ls:cmd("SET AUDIO_OUTPUT_CHANNEL_PARAMETER %d 1 NAME='out_2'" % ls.audio_dev)
 	end
 
+	on_stop(function()
+		for c in pairs(ls.channel_list) do
+			ls:cmd("REMOVE CHANNEL %d" % c)
+		end
+	end)
+
 	return ls
 
 end
+
 
 -- vi: ft=lua ts=3 sw=3
 

@@ -33,7 +33,7 @@ gui:add_mod(f)
 gui:add_mod(rev)
 gui:add_mod(pan)
 
-jack:dsp("synth", 0, 2, function(t_, i1)
+jack:dsp("synth", 0, 2, function(i1)
 	local v = f(o() * (1+n()*c()*10)) * lfo() * 0.1
 	return pan(rev(v, v))
 end)

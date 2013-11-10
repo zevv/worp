@@ -11,6 +11,7 @@ srate = 44100
 --
 
 P = require "luaposix"
+ffi = require "ffi"
 
 --require "app.strict"
 require "app.log"

@@ -19,7 +19,7 @@ function Dsp:Pan(init)
 			},
 		},
 
-		fn_gen = function(_, i1, i2)
+		fn_gen = function(i1, i2)
 			i2 = i2 or i1
 			return i1*v1, i2*v2
 		end

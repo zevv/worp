@@ -65,7 +65,7 @@ function Dsp:Adsr(init)
 				end
 			}, 
 		},
-		fn_gen = function(arg)
+		fn_gen = function()
 			if state == "A" and v >= 1 then
 				state, dv = "D", dv_D
 			elseif state == "D" and v < level_S then

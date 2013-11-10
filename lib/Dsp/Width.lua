@@ -19,7 +19,7 @@ function Dsp:Width(init)
 			},
 		},
 
-		fn_gen = function(_, i1, i2)
+		fn_gen = function(i1, i2)
 			return i1 * a1 + i2 * a2,
 			       i2 * a1 + i1 * a2
 		end

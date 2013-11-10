@@ -122,7 +122,7 @@ function Dsp:Reverb(init)
 				fn_set = function(val) arg_damp = val end
 			}
 		},
-		fn_gen = function(gen, in1, in2)
+		fn_gen = function(in1, in2)
 			in2 = in2 or in1
 			local input = (in1 + in2) * gain
 			

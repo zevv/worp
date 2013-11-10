@@ -63,7 +63,7 @@ function Dsp:Pitchshift(init)
 			},
 		},
 
-		fn_gen = function(_, vi)
+		fn_gen = function(vi)
 
 			if vi == "factor" then
 				factor = arg

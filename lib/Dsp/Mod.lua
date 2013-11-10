@@ -54,7 +54,7 @@ function Dsp:Mod(def, init)
 			return "mod:%s" % { def.description }
 		end,
 		__call = function(_, ...)
-			return def.fn_gen(mod, ...)
+			return def.fn_gen(...)
 		end,
 	})
 

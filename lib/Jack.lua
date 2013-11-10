@@ -30,7 +30,7 @@ local function jack_dsp(jack, name, n_in, n_out, fn)
 			P.read(fd, 1)
 			local ok = safecall(function()
 				for i = 1, jack.bsize do
-					jack_c.write(gu, group.fn(t, jack_c.read(gu)))
+					jack_c.write(gu, group.fn(jack_c.read(gu)))
 					t = t + dt
 				end
 			end)

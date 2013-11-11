@@ -65,11 +65,13 @@ pre {
 	padding-bottom: 1em;
 	padding-left: 1em;
 	white-space: pre;
-	border: solid 1px #dddddd;
-	background-color: #eeeeff;
+	border-top: solid 1px #ff6600;
+	border-bottom: solid 1px #ff6600;
+//	background-color: #eeeeff;
 }
 
 .warn {
+	margin-left: 20px;
 	color: #880000;
 	border-left: solid 3px red;
 	padding-left: 5px;

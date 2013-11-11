@@ -1,0 +1,66 @@
+#!/usr/bin/lua
+ 
+local menu = {}
+for i, page in ipairs(arg) do
+   menu[i] = "<a href=" .. page .. ".html>" .. page .. "</a>"
+end
+menu = table.concat(menu, " | ")
+ 
+
+function code(s)
+	local fname = os.tmpname()
+   local fd = io.open(fname, "w")
+   fd:write(s)
+   fd:close()
+ 
+   local h = io.popen("highlight -f --inline-css --syntax lua " .. fname, "r")
+   local v = h:read("*a")
+   h:close()
+ 
+   return "<div class=code>" .. v .. "</div>\n\n"
+end
+ 
+function link(s)
+	if s:find("png") then
+		return "<img src='img/" .. s .. "'>"
+	else
+		return "<a href=" .. s .. ".html>" .. s .. "</a>"
+	end
+end
+ 
+local c = io.read("*a")
+
+c = c:gsub("<", "&lt;")
+c = c:gsub(">", "&gt;")
+c = c:gsub("\n= ([^\n]+)", "<h1>%1</h1>")
+c = c:gsub("\n== ([^\n]+)", "<h2>%1</h2>")
+c = c:gsub("\n(\n .-)\n\n", code)
+c = c:gsub("\n\n", "\n\n<p>\n")
+c = c:gsub("%[([%S+]+)%]", link)
+c = c:gsub("NOTE: (.-)\n\n", "<div class=warn>%1</div>")
+--c = c:gsub("\n%*(.-)\n\n", "<li>%1</li>")
+
+ 
+ 
+print([[
+<!DOCTYPE html>
+<head>
+   <link rel="stylesheet" type="text/css" href="style.css">
+   <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Text Me One">
+   <link rel="icon" type="image/png" href="img/worp-icon.png" />
+</head>
+ 
+<body>
+	<div id=logo></div>
+ 
+	<div id=menu>
+]] .. menu .. [[
+   </div>
+   <div id=main>
+]] .. c .. [[
+   </div>
+</body>
+]])
+ 
+
+-- vi: ft=lua ts=3 sw=3

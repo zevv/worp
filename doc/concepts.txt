@@ -1,0 +1,107 @@
+
+= Basic concepts
+
+Worp is built on the following core concepts:
+
+== The sandbox
+
+Worp scripts are run in a Lua sandbox. This is simple a separate namespace in
+the Lua interpreter where code can be loaded without interfering with Worp
+itself.
+
+Any variables and functions which are not defined local will end up being
+globals in the sandbox namespace. While globals are usually considered bad
+practice, they come in handy when using live programming: when new chunks are
+sent from the editor to Worp they are run in the same sandbox and can access or
+alter any defined variables.
+
+== Instruments
+
+An instrument in Worp is basically a function which, when called, will start
+generating sound at the given note and given volume. Calling the same function
+more than once will play more then one note for polyphonic instruments, and
+calling the same function for an active note with the volume set to zero will
+mute the note.
+
+Worp uses midi note numbers for instruments, where 60 is defined as the middle
+C at 261.6 Hz. Volume is given in the range 0 to 1.
+
+For example, the following code will play the middle C on piano for 1 second at
+medium volume (assuming the function 'piano' has been defined earlier):
+
+  piano(60, 0.8) at(1, function() 
+     piano(60, 0) 
+  end)
+
+Because Worp is all about playing notes, the 'play()' function is provided as a
+shorthand. Again playing the middle C for one second:
+
+  play(piano, 0.8, 1)
+
+
+== Time
+
+Time in Worp is handled by the event scheduler, which does nothing more than
+calling functions at a requested time. To schedule a function for future
+execution, use the built in function 'at':
+at(TIME, FUNCTION [, ...])
+
+For example, the following line will print the text "Hello world" after one
+second:
+
+  at(1, function() 
+     print("Hello", "world") 
+  end)
+
+The 'at()' function has a shorthand notation for functions which are defined
+globally:
+
+  at(1, "print", "Hello", "world")
+
+Worp takes care not to let time slip unexpectedly. Consider the following
+fragment:
+
+  at(1, 'play', piano, 60, 0.3) 
+  at(1, 'play', piano, 72, 0.3)
+
+If at() would use the current time as reference for scheduling function calls
+in the future, there would be no guarantee that the two notes would be played
+at the same time: if any time goes by between the two calls to 'at()', the two
+calls will be scheduled to run at a different time.
+
+Instead, at() uses another time reference: the time the current function was
+scheduled to run, even if for some reason the current function was scheduled
+too early or too late.
+
+The result is that the following code:
+
+  function tick() 
+     print("tick") 
+     at(1, tick) 
+  end 
+  tick()
+
+is sure to call the tick() function at exact 1 second intervals on average,
+without introducing additional delay caused by the time needed to run the code.
+
+On top of this function more complex objects such as metronomes and pattern
+generators can be built.
+
+== Jack
+
+Worp has been designed to be Jack-centric. Jack provides a lot of usable
+plumbing, which is readily available from Worp.
+
+* Connecting ports: Worp can be used to drive external samplers, synths and
+  effects, which all have Jack audio ports. Worp can manage all audio and
+  midi ports, making and breaking connections on the fly.
+
+* Sound: Worp uses jack to send and receive audio. Using the performance of
+  the LuaJIT compiler, a lot of DSP can be done to build synthesizers and
+  effects.
+
+* Midi: Jack is used to send and receive MIDI messages to other applications
+  and/or devices.
+
+For more details, see the [jack] page.
+

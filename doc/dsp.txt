@@ -1,0 +1,14 @@
+
+= DSP
+
+  j = Jack:new("worp")
+  saw = Dsp:Saw { f = 50 }
+  filt = Dsp:Filter { ft = "lp", f = 1500, Q = 4 }
+  
+  j:dsp("synth", 0, 1, function()
+    return filt(saw())
+  end)
+  
+  j:connect("worp")
+
+

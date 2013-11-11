@@ -1,0 +1,31 @@
+
+= About
+
+Worp is an experimental sound / music / DSP engine written in LuaJIT, currently
+in early alpha state.
+
+Some highlights:
+
+== Bindings for Jack, Linuxsampler, Fluidsynth:
+
+Worp comes with default bindings for Jack audio and midi, and has built-in
+support for Linuxsampler and Fluidsynth.
+
+== Built on LuaJIT:
+
+Worp is built on LuaJIT, a Just-In-Time Compiler (JIT) for the Lua
+programming language. LuaJIT gives the flexibility and robustness of a
+proven language, while delivering near native performance. This allows for
+low-level DSP code (filters, reverbs, etc.) to be written in a high level
+language.
+
+== Live coding:
+
+Worp supports live coding through the use of a plug-in for your favourite
+editor (if your favourite editor is Vim). Code is sent from the editor into
+the Worp process, where it is compiled and executed without disrupting the
+current program flow.
+
+Worp is in early development and subject to lots of changes. Expect
+documentation to be outdated, examples to fail and API's to be different then
+described.

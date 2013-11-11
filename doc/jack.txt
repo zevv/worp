@@ -1,0 +1,118 @@
+
+= Jack
+
+While Worp itself does not depend on Jack, a Jack library is available which
+provides some essential functionalty for making sound and music.
+
+To use jack from a worp script, first a jack client object must be created. The
+following code creates a jack object 'j', and uses 'foo' as the jack client
+name:
+
+
+  j = Jack("worp")
+
+
+Now that a jack client is available, we can use it to do some work:
+
+== Connecting ports
+
+Connecting Jack ports is done with the ':connect()' method of the jack client
+object:
+
+
+  j:connect(FROM [,TO])
+
+
+The connect function does only one thing: it will try to connect all ports
+matched by 'FROM' to all ports of the same types matched by 'TO'. If the 'TO'
+argument is not given, it will match any jack port in the sytem with the same
+port type.
+
+For example, given a system with the following (unconnected) jack clients and
+ports:
+
+[connect-1.png]
+
+When calling:
+
+  j:connect("worp")
+
+Worp will:
+
+* find all ports starting with the FROM string 'worp'.
+
+* find all ports starting with the TO string. Since this string is not given, it will match all Jack ports.
+
+* For each of the found FROM ports, it will try to find and connect to any TO port of the same type, but with the opposite direction (input/output)
+
+* If the number of matching ports do not match, it will try to do the right thing to connect a single mono to two stereo ports.
+
+The result will be the following graph:
+
+[connect-2.png]
+
+For more fine grained control, ports can be specified with more detail. Some
+examples:
+
+
+  j:connect("worp", "system:playback") 
+  j:connect("worp:synth, "system") 
+  j:connect("worp:synth-in") 
+  j:connect("worp:synth-in-1", "system:capture_1")
+
+
+Check the sample scripts for more examples of the usage of the connect()
+function.
+
+
+== Handling midi
+
+The jack client provides two methods for receiving midi data:
+
+
+  j:on_note(CHANNEL, FN) 
+  j:on_cc(CHANNEL, CC, FN)
+
+
+For example, the following snippet will print all received midi notes and
+control changes for midi channel 1 and CC #5:
+
+
+  j:on_note(1, function(note, vel) 
+     print("key", note, vel) 
+  end) 
+  
+  j:on_cc(1, 5, function(val) 
+     print("cc", val) 
+  end)
+
+
+== Handling audio
+
+NOTE: The DSP API is currently being reworked, so the documentation below will be
+outdated soon
+
+The jack client object can be used to connect Worp to a number of Jack audio
+ports. The call
+
+
+  j:dsp(NAME, INPUT_COUNT, OUTPUT_COUNT, FN)
+
+
+will create a number of audio ports with the name NAME-[in|out]-#, and will
+from that moment call the given function FN for each audio sample.
+
+For example, the following function will generate a 1 Khz sine wave on a single
+Jack output port called worp:beep-out-1:
+
+
+  i, di = 0, 1000 * math.pi * 2 / srate 
+  jack:dsp("beep", 0, 1, function() 
+     i = i + di 
+     return cos(i) 
+  end)
+
+
+Worp provides a convenient abstraction layer for doing digital signal
+processing, for more details see the dsp page.
+

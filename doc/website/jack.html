@@ -60,13 +60,14 @@ j:connect("worp")
 
 <p><img src="img/connect-2.png">
 
-<p>For more fine grained control, ports can be specified with more detail:
+<p>For more fine grained control, ports can be specified with more detail. Some
+examples:
 
 <div class=code>
-j:connect("worp")
-j:connect("worp:synth")
+j:connect("worp", "system:playback")
+j:connect("worp:synth, "system")
 j:connect("worp:synth-in")
-j:connect("worp:synth-in-1")
+j:connect("worp:synth-in-1", "system:capture_1")
 </div>
 
 Check the sample scripts for more examples of the usage of the connect() function.

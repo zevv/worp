@@ -13,7 +13,7 @@ function code(s)
    fd:write(s)
    fd:close()
  
-   local h = io.popen("highlight -f --inline-css --syntax lua " .. fname, "r")
+   local h = io.popen("highlight -f --syntax lua " .. fname, "r")
    local v = h:read("*a")
    h:close()
  
@@ -38,14 +38,13 @@ c = c:gsub("\n(\n .-)\n\n", code)
 c = c:gsub("\n\n", "\n\n<p>\n")
 c = c:gsub("%[([%S+]+)%]", link)
 c = c:gsub("NOTE: (.-)\n\n", "<div class=warn>%1</div>")
---c = c:gsub("\n%*(.-)\n\n", "<li>%1</li>")
-
  
  
 print([[
 <!DOCTYPE html>
 <head>
    <link rel="stylesheet" type="text/css" href="style.css">
+   <link rel="stylesheet" type="text/css" href="highlight.css">
    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Text Me One">
    <link rel="icon" type="image/png" href="img/worp-icon.png" />
 </head>

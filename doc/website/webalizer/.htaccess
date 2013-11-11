@@ -1,0 +1,5 @@
+AuthUserFile /usr/local/pruts/share/skel/htpasswd
+AuthGroupFile /dev/null
+AuthName 'nothere'
+AuthType Basic
+require valid-user

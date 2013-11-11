@@ -1,0 +1,153 @@
+# Webalizer V2.01-10 Incremental Data - 11/11/2013 06:46:44
+2013 11 11 6 46 44
+954 477 3 5 3 4 1206067 370 4 0 0 0
+2 8 373 10 11
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+933 458 1139986 2 355 2 0 0
+21 19 66081 2 15 2 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0
+7 6 21551 4 0 0
+6 6 14935 6 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+8 7 29595 5 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+260 116 384153 91 0 0
+373 198 363265 137 0 0
+229 100 259897 93 0 0
+71 44 132671 34 0 0
+0
+0
+0
+477
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+470
+0
+0
+0
+0
+0
+0
+7
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+# -urls- 
+/
+0 370 0 821526 4 0 0 0
+/icons/blank.gif
+1 1 0 148 0 0 0 0
+/worp-long.png
+1 1 0 29855 0 0 0 0
+/style.css
+0 298 0 64027 0 0 0 0
+/img/worp-long.png
+1 277 0 282534 0 0 0 0
+# End Of Table - urls
+# -sites- (monthly)
+a82-161-207-232.adsl.xs4all.nl
+0 939 463 1167768 2 1384152404
+/ 0 0
+pruts.nl
+0 2 2 1813 1 1384124616
+- 0 0
+82-169-175-211.ip.telfort.nl
+0 13 12 36486 1 1384135826
+- 0 0
+# End Of Table - sites (monthly)
+# -sites- (daily)
+a82-161-207-232.adsl.xs4all.nl
+0 8 7 29595 1 1384152404
+/ 0 0
+82-169-175-211.ip.telfort.nl
+0 13 12 36486 1 1384135826
+- 0 0
+# End Of Table - sites (daily)
+# -referrers- 
+- (Direct Request)
+0 68
+http://worp.zevv.nl/
+1 760
+http://worp.zevv.nl/style.css
+1 126
+# End Of Table - referrers
+# -agents- 
+rbot http util 0.9.15 (http://ruby-rbot.org)
+0 2
+Mozilla/5.0 (Linux; U; Android 2.3.3; en-nl; HTC_DesireZ_A7272 Build/GRI40) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0
+0 8
+Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0
+0 13
+Mozilla/5.0 (X11; Linux x86_64; rv:22.0) Gecko/20100101 Firefox/22.0
+0 931
+# End Of Table - agents
+# -search strings- 
+# End Of Table - search strings
+# -usernames- 
+# End Of Table - usernames

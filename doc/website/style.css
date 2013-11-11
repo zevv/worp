@@ -1,0 +1,79 @@
+
+html {
+	margin-left: 0px;
+}
+
+body {
+	margin-left: 0px;
+	margin-top: 20px;
+}
+
+* {
+	font-family: 'Text Me One';
+}
+
+
+li {
+	margin-top: 10px;
+}
+
+#logo {
+	background-image: url(img/worp-long.png);
+	background-repeat: no-repeat;
+	height: 80px;
+}
+
+#menu {
+	margin-top: 10px;
+	margin-left: auto;
+	margin-right: auto;
+	width: 80%;
+}
+
+#main {
+	margin-top: 50px;
+	margin-left: auto;
+	margin-right: auto;
+	width: 80%;
+}
+
+p {
+	margin-left: 20px;
+}
+
+a {
+	color: black;
+}
+
+h1 {
+	margin-top: 40px;
+	font-size: 1.2em;
+	border-bottom: solid 1px #cccccc;
+}
+
+h2 {
+	margin-top: 40px;
+	font-size: 1em;
+}
+
+pre {
+	font-family: courier;
+}
+
+.code {
+	margin: 10px;
+	padding-bottom: 1em;
+	padding-left: 1em;
+	white-space: pre;
+	border: solid 1px #dddddd;
+	background-color: #eeeeff;
+}
+
+.warn {
+	color: #880000;
+	border-left: solid 3px red;
+	padding-left: 5px;
+}
+
+// vi: ts=3 sw=3
+

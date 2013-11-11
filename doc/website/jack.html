@@ -31,20 +31,7 @@ port type.
 <p>For example, given a system with the following (unconnected) jack clients
 and ports:
 
-<pre>
-system:capture_1
-system:capture_2
-system:midi_capture_1
-	
-system:playback_1
-system:playback_2
-system:midi_playback_1
-
-worp:in_1
-worp:out_1
-worp:out_2
-worp:midi_in
-</pre>
+<p><img src="img/connect-1.png">
 
 <p>When calling:
 
@@ -71,21 +58,18 @@ j:connect("worp")
 
 <p>The result will be the following graph:
 
+<p><img src="img/connect-2.png">
 
-<pre>
-	
-system:capture_1 -----                
-                      \  
-system:capture_2 ---------> worp:in_1
+<p>For more fine grained control, ports can be specified with more detail:
 
-system:midi_capture_1 ----> worp:midi_in
+<div class=code>
+j:connect("worp")
+j:connect("worp:synth")
+j:connect("worp:synth-in")
+j:connect("worp:synth-in-1")
+</div>
 
-                            worp:out_1 -------> system:playback_1
-
-                            worp:out_2 -------> system:playback_2
-</pre>
-
-
+Check the sample scripts for more examples of the usage of the connect() function.
 
 <h2>Handling midi</h2>
 

@@ -1,0 +1,58 @@
+
+
+== Installing
+
+The Worp source code is hosted on github. Currently there are no official
+releases available, so get the latest code from Github and hope for the best.
+There is no 'make install' target, simply start Worp from the source directory.
+
+  $ git clone https://github.com/zevv/worp.git
+  $ make
+  $ ./worp
+
+
+== Dependencies
+
+Worp has the following dependencies:
+
+* LuaJIT >= 2.0.0
+* Fluidsynth (optional)
+* LGI (optional)
+* Linuxsampler (optional)
+
+
+== Misc
+
+During the development of Worp I learned of the existence of Impromptu and
+SuperCollider, which both have features similar to worp (Event scheduling, live
+coding, etc). I've shamelessly stolen some ideas here and there from both
+projects where I saw fit.
+
+* [http://impromptu.moso.com.au]
+* [http://supercollider.sourceforge.net]
+
+
+== License
+
+The MIT License (MIT)
+
+Copyright (c) 2013 Ico Doornekamp
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+

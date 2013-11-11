@@ -1,12 +1,97 @@
 
 = DSP
 
+Worp comes with a library with basic constructs for doing audio synthesis of
+processing. This library provides abstracts for 'modules', which are objects
+that process of generate sound, and can be controlled by 'controls'.
+
+== Modules
+
+Technicaly, a module is a Lua table with a __call entry in its metatable. This
+allows the table to be called like a function, but also to have callable methods.
+
+Modules are instantiated by calling the appropriate library function, and can
+optionally be passed initial values for the controls. The following will generate
+a sine oscillator with an initial frequency of 500 Hz:
+
+  osc = Dsp:Osc { f = 1500 }
+
+osc can be handled as a function, and will generate a new sample each time it is called. 
+
+For example, to see the above oscillator in action try:
+
+  for i = 1, 100 do
+     print(osc())
+  end
+
+The Worp console output will print the sample values:
+
+  0.21209065141554
+  0.41453117669030
+  0.59811053049122
+  ...
+
+Some modules like filters can also process audio, and will take
+one or more sample values when called. To send the output of a 30 Hz saw wave
+into a 100 Hz low pass filter with a resonance of 3:
+
+  o = Dsp:Saw { f = 30 }
+  f = Dsp:Filter { f = 100, Q = 3 }
+  
+  for = i 1, 100 do
+    print(f(o())
+  end
+
+
+== Controls
+
+Modules often have one or more controls to effect the behaviour. The module
+object provides a handy :help() method to show what controls are available:
+
+  f = Dsp:Filter { f = 100, Q = 3 }
+  f:help()
+
+will print
+
+  Biquad filter:
+   - type: Filter type (lp/hp/bp/bs/ls/hs/eq/ap)
+   - f: Frequency (0..20000)
+   - Q: Resonance (0.1..100)
+   - gain: Shelf/EQ filter gain (-60..60)
+
+To set the value of a control, use the :set() method:
+
+  f:set { type = "hp", f = 200 }
+
+
+The Jack library knows about controls, and provides a shorthand to map controls
+to midi CC's. The following snippet will map all four filter controls to CC 10,
+11, 12 and 13 on midi channel 1:
+
   j = Jack:new("worp")
-  saw = Dsp:Saw { f = 50 }
-  filt = Dsp:Filter { ft = "lp", f = 1500, Q = 4 }
+  f = Dsp:Filter()
+  m = Jack:midi("midi")
+  m:map_mod(1, 10, f)
+
+To map a single control, use:
+
+  m:map_control(1, 10, f:control "Q")
+
+
+== Generating sound
+
+This is where the Jack and Dsp libraries come together. The fragment
+below will low-pass filter a saw wave, send the result to a jack audio
+port called 'worp:synth-out-1', and connect this port to all available
+input ports in the system:
+
+  s = Dsp:Saw { f = 50 }
+  f = Dsp:Filter { ft = "lp", f = 1500, Q = 4 }
+  
+  j = Jack:new("worp")
   
   j:dsp("synth", 0, 1, function()
-    return filt(saw())
+     return f(s())
   end)
   
   j:connect("worp")

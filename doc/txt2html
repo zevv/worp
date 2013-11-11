@@ -2,7 +2,7 @@
  
 local menu = {}
 for i, page in ipairs(arg) do
-   menu[i] = "<a href=" .. page .. ".html>" .. page .. "</a>"
+   menu[i] = "<a href=" .. page .. ".html>" .. page:gsub("_", " ") .. "</a>"
 end
 menu = table.concat(menu, " | ")
  
@@ -13,11 +13,11 @@ function code(s)
    fd:write(s)
    fd:close()
  
-   local h = io.popen("highlight -f --syntax lua " .. fname, "r")
+   local h = io.popen("highlight --fragment --css=/dev/null --syntax lua " .. fname, "r")
    local v = h:read("*a")
    h:close()
  
-   return "<div class=code>" .. v .. "</div>\n\n"
+   return "<pre class=hl>" .. v .. "</pre>\n\n"
 end
  
 function link(s)
@@ -27,7 +27,11 @@ function link(s)
 		return "<a href=" .. s .. ".html>" .. s .. "</a>"
 	end
 end
- 
+
+function list(s, n)
+	return "<ul>" .. s:gsub("\n%*", "<li>") .. "</ul>\n\n" .. n
+end
+
 local c = io.read("*a")
 
 c = c:gsub("<", "&lt;")
@@ -35,9 +39,11 @@ c = c:gsub(">", "&gt;")
 c = c:gsub("\n= ([^\n]+)", "<h1>%1</h1>")
 c = c:gsub("\n== ([^\n]+)", "<h2>%1</h2>")
 c = c:gsub("\n(\n .-)\n\n", code)
-c = c:gsub("\n\n", "\n\n<p>\n")
 c = c:gsub("%[([%S+]+)%]", link)
-c = c:gsub("NOTE: (.-)\n\n", "<div class=warn>%1</div>")
+c = c:gsub("NOTE: (.-)\n\n", "<div class=warn>%1</div>\n\n")
+c = c:gsub("(\n%*.-)\n([^%s%*])", list)
+c = c:gsub("\n\n", "\n\n<p>\n")
+c = c:gsub("'(%w+)'", "<i>%1</i>")
  
  
 print([[

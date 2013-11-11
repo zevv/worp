@@ -1,5 +1,5 @@
 
-PAGES = index architecture concepts jack dsp
+PAGES = index architecture concepts jack dsp examples live_coding about
 
 HTML = $(addsuffix .html, $(PAGES))
 

@@ -1,5 +1,5 @@
 
-= About
+= Introduction
 
 Worp is an experimental sound / music / DSP engine written in LuaJIT, currently
 in early alpha state.

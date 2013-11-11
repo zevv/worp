@@ -87,21 +87,3 @@ without introducing additional delay caused by the time needed to run the code.
 On top of this function more complex objects such as metronomes and pattern
 generators can be built.
 
-== Jack
-
-Worp has been designed to be Jack-centric. Jack provides a lot of usable
-plumbing, which is readily available from Worp.
-
-* Connecting ports: Worp can be used to drive external samplers, synths and
-  effects, which all have Jack audio ports. Worp can manage all audio and
-  midi ports, making and breaking connections on the fly.
-
-* Sound: Worp uses jack to send and receive audio. Using the performance of
-  the LuaJIT compiler, a lot of DSP can be done to build synthesizers and
-  effects.
-
-* Midi: Jack is used to send and receive MIDI messages to other applications
-  and/or devices.
-
-For more details, see the [jack] page.
-

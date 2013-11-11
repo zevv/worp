@@ -41,11 +41,15 @@ Worp will:
 
 * find all ports starting with the FROM string 'worp'.
 
-* find all ports starting with the TO string. Since this string is not given, it will match all Jack ports.
+* find all ports starting with the TO string. Since this string is 
+  not given, it will match all Jack ports.
 
-* For each of the found FROM ports, it will try to find and connect to any TO port of the same type, but with the opposite direction (input/output)
+* For each of the found FROM ports, it will try to find and 
+  connect to any TO port of the same type, but with the opposite direction 
+  (input/output)
 
-* If the number of matching ports do not match, it will try to do the right thing to connect a single mono to two stereo ports.
+* If the number of matching ports do not match, it will try to do the 
+  right thing to connect a single mono to two stereo ports.
 
 The result will be the following graph:
 
@@ -56,7 +60,7 @@ examples:
 
 
   j:connect("worp", "system:playback") 
-  j:connect("worp:synth, "system") 
+  j:connect("worp:synth", "system") 
   j:connect("worp:synth-in") 
   j:connect("worp:synth-in-1", "system:capture_1")
 

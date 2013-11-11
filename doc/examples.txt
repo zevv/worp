@@ -1,0 +1,14 @@
+
+= Examples
+
+
+== Linuxsampler
+
+  ls = Linuxsampler:new("synth", "/opt/samples")
+  j = Jack:new("worp")
+  midi = j:midi()
+  piano = ls:add("piano/Bosendorfer.gig", 0)
+  midi:map_instr(1, piano)
+  j:connect("synth")
+  j:connect("worp")
+

@@ -36,9 +36,15 @@ function Dsp:Mod(def, init)
 		end,
 
 		help = function(mod)
-			print("%s: %s" % { mod.id, mod.description })
+			print("%s:" % { mod.description })
 			for _, control in ipairs(mod:controls()) do
-				print(" - %s: %s (%s)" % { control.id, control.description, control.unit or "" })
+				local range = ""
+				if #control.options > 0 then
+					range = table.concat(control.options, "/")
+				elseif control.min or control.max then
+					range = "%s..%s" % { control.min or 0, control.max or 1 }
+				end
+				print(" - %s: %s (%s)" % { control.id, control.description, range })
 			end
 		end,
 

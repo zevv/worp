@@ -13,10 +13,6 @@ div, p, h1, h2, li, a, .warn {
 }
 
 
-li {
-	margin-top: 10px;
-}
-
 #menu {
 	background-image: url(../img/worp-long.png);
 	background-repeat: no-repeat;

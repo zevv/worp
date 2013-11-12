@@ -4,14 +4,15 @@ l = Linuxsampler:new("piano", "/opt/samples")
 m = Metro:new(150, 10)
 v = l:add("piano/megapiano.gig", 0)
 n = Dsp:Noise()
-nf = Dsp:Filter { type = "bp", f = 8000, Q = 5 }
+nf = Dsp:Filter { type = "hp", f = 8000, Q = 5 }
 p = Dsp:Pan()
 a = Dsp:Adsr { A = 0, D = 0.03, S = 1, R = 0.05 }
 r = Dsp:Reverb { }
 f = Dsp:Filter { type = "bp", Q = 5 }
 lfo = Dsp:Osc { f = 4 / m:t_meas() }
 
-ns = { 36, 75, 79, 84, 34, 75, 79, 74, 84, 82 }
+ns = { 36, 75, 79, 84, 34, 75, 79, 74, 84, 82,
+       36, 75, 79, 34, 84, 75, 79, 74, 84, 82 }
 
 function loop(i)
 	play(v, ns[i], ns[i] < 40 and 0.8 or 0.6, 1.0)

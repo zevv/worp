@@ -94,8 +94,11 @@ The Worp source code is hosted on github. Currently there are no official
 releases available, so get the latest code from Github and hope for the best.
 There is no 'make install' target, simply start Worp from the source directory.
 
-  git clone https://github.com/zevv/worp.git
-  cd worp
-  make
-  ./worp
+Check [http://github.com/zevv/worp] for the latest code.
+
+
+  $ git clone https://github.com/zevv/worp.git
+  $ cd worp
+  $ make
+  $ ./worp
 

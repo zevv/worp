@@ -31,7 +31,7 @@ function link(s)
 		]]
 	else
 		local u = s
-		if not u:find("%.%a+$") then u = u .. ".html" end
+		if not u:find("^http") then u = u .. ".html" end
 		return "<a href=" .. u .. ">" .. s .. "</a>"
 	end
 end

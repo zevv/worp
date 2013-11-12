@@ -17,10 +17,12 @@ li {
 	margin-top: 10px;
 }
 
-#logo {
+#menu {
 	background-image: url(../img/worp-long.png);
 	background-repeat: no-repeat;
 	height: 80px;
+	padding-top: 60px;
+	text-align: right;
 }
 
 img {
@@ -31,14 +33,6 @@ img {
 	margin-left: 100px;
 	width: 400px;
 	text-align: center;
-}
-
-
-#menu {
-	margin-top: 10px;
-	margin-left: auto;
-	margin-right: auto;
-	width: 80%;
 }
 
 #tocmain {

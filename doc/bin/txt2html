@@ -77,8 +77,6 @@ print([[
 </head>
  
 <body>
-	<div id=logo></div>
- 
 	<div id=menu>
 ]] .. menu .. [[
    </div>

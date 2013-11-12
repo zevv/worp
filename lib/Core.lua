@@ -11,7 +11,7 @@ function rl(vs)
 end
 
 function rr(min, max)
-	return math.random(min, max)
+	return min + math.random() * (max-min)
 end
 
 -- vi: ft=lua ts=3 sw=3

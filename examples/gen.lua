@@ -15,7 +15,7 @@ ns = { 36, 75, 79, 84, 34, 75, 79, 74, 84, 82,
        36, 75, 79, 34, 84, 75, 79, 74, 84, 82 }
 
 function loop(i)
-	play(v, ns[i], ns[i] < 40 and 0.8 or 0.6, 1.0)
+	play(v, ns[i], ns[i] < 40 and 0.7 or 0.6, 1.0)
 	i = (i % #ns) + 1
 	at(m:t_beat(), loop, i)
 end
@@ -25,6 +25,7 @@ j:dsp("wah", 1, 1, function(vi)
 	return f(vi)
 end)
 
+
 j:dsp("perc", 0, 2, function()
 	return p( r( nf( a() * n() ) ) )
 end)
@@ -32,7 +33,7 @@ end)
 function click()
 	nf:set { f = rr(8000, 12000) }
 	p:set { pan = rr(-1, 1) }
-	a:set { vel = rr(0.2, 0.8)  }
+	a:set { vel = rr(0.2, 0.6)  }
 	at(0.01, function() a:set { vel = 0 } end)
 	at(m:t_beat() * 0.5, "click")
 end

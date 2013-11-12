@@ -24,7 +24,9 @@ function link(s)
 	if s:find("png") then
 		return "<img src='img/" .. s .. "'>"
 	else
-		return "<a href=" .. s .. ".html>" .. s .. "</a>"
+		local u = s
+		if not u:find("%.%a+$") then u = u .. ".html" end
+		return "<a href=" .. u .. ">" .. s .. "</a>"
 	end
 end
 
@@ -32,19 +34,37 @@ function list(s, n)
 	return "<ul>" .. s:gsub("\n%*", "<li>") .. "</ul>\n\n" .. n
 end
 
+local toc = {}
+
+function h1(s)
+	table.insert(toc, s)
+	return "<a name='" .. s .. "'></a><h1>" .. s .. "</h1>"
+end
+
+function h2(s)
+	table.insert(toc, s)
+	return "<a name='" .. s .. "'></a><h2>" .. s .. "</h2>"
+end
+
 local c = io.read("*a")
 
 c = c:gsub("<", "&lt;")
 c = c:gsub(">", "&gt;")
-c = c:gsub("\n= ([^\n]+)", "<h1>%1</h1>")
-c = c:gsub("\n== ([^\n]+)", "<h2>%1</h2>")
+c = c:gsub("'(%w+)'", "<i>%1</i>")
+c = c:gsub("_(%w+)_", "<b>%1</b>")
+c = c:gsub("\n= ([^\n]+)", h1)
+c = c:gsub("\n== ([^\n]+)", h2)
 c = c:gsub("\n(\n .-)\n\n", code)
 c = c:gsub("%[([%S+]+)%]", link)
 c = c:gsub("NOTE: (.-)\n\n", "<div class=warn>%1</div>\n\n")
 c = c:gsub("(\n%*.-)\n([^%s%*])", list)
 c = c:gsub("\n\n", "\n\n<p>\n")
-c = c:gsub("'(%w+)'", "<i>%1</i>")
- 
+
+for i = 1, #toc do
+	local s = toc[i]
+	toc[i] = "<a href='#" .. s .. "'>" .. s .. "</a>"
+end
+toc = table.concat(toc, "<br>")
  
 print([[
 <!DOCTYPE html>
@@ -61,9 +81,21 @@ print([[
 	<div id=menu>
 ]] .. menu .. [[
    </div>
-   <div id=main>
+	<table id=tocmain>
+		<tr>
+			<td>
+				<div id=toc>
+				<p>
+]] .. toc .. [[
+				</div>
+			</td><td>
+				<div id=main>
 ]] .. c .. [[
-   </div>
+				</div>
+			</td>
+		</tr>
+	</table>
+	</div>
 </body>
 ]])
  

@@ -1,7 +1,7 @@
 
 = DSP
 
-Worp comes with a library with basic constructs for doing audio synthesis of
+Worp comes with a library with basic constructs for doing audio synthesis and
 processing. This library provides abstracts for 'modules', which are objects
 that process of generate sound, and can be controlled by 'controls'.
 

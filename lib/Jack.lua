@@ -1,4 +1,8 @@
 
+--
+-- See the [jack] documentation page
+--
+
 local jack_c = require "jack_c"
 
 --

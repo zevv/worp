@@ -25,7 +25,7 @@ function Dsp:Noise(init)
 				id = "type",
 				description = "Noise type",
 				type = "enum",
-				options = "uniform,gaussian",
+				options = { "uniform", "gaussian" },
 				default = "uniform",
 				fn_set = function(val) type = val end
 			},

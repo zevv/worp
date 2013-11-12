@@ -1,4 +1,9 @@
 
+--
+-- Generator which outputs a constant value in the range 0..1, controlled by
+-- the 'c' control. Useful for easy mapping of a GUI knob or midi CC to a value.
+--
+
 function Dsp:Const(init)
 
 	local c

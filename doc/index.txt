@@ -73,7 +73,7 @@ language.
 
 Worp comes with default bindings for Jack audio and midi, and has built-in
 support for Linuxsampler and Fluidsynth. A growing library of DSP primitives is
-provided, for example oscillators, filters, delays, pitch-shifters, etc.
+provided: oscillators, filters, delays, pitch-shifters, etc.
 
 
 == Live coding

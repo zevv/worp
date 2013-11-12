@@ -1,6 +1,9 @@
 
+
 Worp is an experimental sound / music / DSP engine written in LuaJIT, currently
 in early alpha state.
+
+The main Worp web site and documentation can be found at http://worp.zevv.nl
 
 Some highlights:
 
@@ -12,28 +15,4 @@ Some highlights:
   use of a vim plugin. New chunks can be sent and compiled on the fly.
 
 - Bindings for Fluidsynth and midi support
-
-
-Building 
-========
-
-Worp depends on the following packages:
-
-- luajit (>= 2.0.0)
-- Jack audio connection kit
-- Fluidsynth
-
-For live programming you need vim with built in lua support.
-
-Worp currently has no proper build system, just some static makefiles. Build
-by running 'make', and run from the current directory:
-
-  $ make
-  $ ./worp [script]
-
-The prjs/ directory contains some example scripts, which can be passed on the
-commandline to run at startup:
-
-  $ ./worp prjs/scales.lua
-
 

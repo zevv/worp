@@ -21,11 +21,17 @@ function code(s)
 end
  
 function link(s)
-	if s:find("png") then
+	if s:find("png$") then
 		return "<img src='img/" .. s .. "'>"
+	elseif s:find("mp3$") then
+		return [[
+		<div class=mp3>
+		 <object type="application/x-shockwave-flash" data="htdocs/zplayer.swf?c1=ff4400&c2=0&c3=0&mp3=]] .. s .. [[" width="200" height="20"/>
+		 <param name="movie" value="htdocs/zplayer.swf?mp3=]] .. s .. [[" /> </object><br>]] .. s .. [[ </div>
+		]]
 	else
 		local u = s
-		if not u:find("%.%a+$") then u = u .. ".html" end
+		if not u:find("^http") then u = u .. ".html" end
 		return "<a href=" .. u .. ">" .. s .. "</a>"
 	end
 end
@@ -64,15 +70,13 @@ toc = table.concat(toc, "<br>")
 print([[
 <!DOCTYPE html>
 <head>
-   <link rel="stylesheet" type="text/css" href="style.css">
-   <link rel="stylesheet" type="text/css" href="highlight.css">
+   <link rel="stylesheet" type="text/css" href="htdocs/style.css">
+   <link rel="stylesheet" type="text/css" href="htdocs/highlight.css">
    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Text Me One">
    <link rel="icon" type="image/png" href="img/worp-icon.png" />
 </head>
  
 <body>
-	<div id=logo></div>
- 
 	<div id=menu>
 ]] .. menu .. [[
    </div>

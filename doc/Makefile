@@ -1,5 +1,5 @@
 
-PAGES 	:= index architecture concepts jack dsp examples live_coding libs about
+PAGES 	:= index architecture concepts jack dsp examples live_coding gui libs about
 
 LIBS	:= $(wildcard ../lib/*.lua ../lib/Dsp/*.lua)
 
@@ -8,11 +8,11 @@ HTML	+= libs.html
 
 all: $(HTML)
 
-%.html: %.txt txt2html
-	./txt2html $(PAGES) < $< > $@
+%.html: %.txt bin/txt2html
+	bin/txt2html $(PAGES) < $< > $@
 
-libs.txt: ./libdocs $(LIBS)
-	./libdocs $(LIBS) > $@
+libs.txt: bin/libdocs $(LIBS)
+	bin/libdocs $(LIBS) > $@
 
 clean:
 	rm -f *.html

@@ -8,7 +8,7 @@ body {
 	margin-top: 20px;
 }
 
-p, h1, h2, li, a, .warn {
+div, p, h1, h2, li, a, .warn {
 	font-family: 'Text Me One';
 }
 
@@ -17,18 +17,22 @@ li {
 	margin-top: 10px;
 }
 
-#logo {
-	background-image: url(img/worp-long.png);
+#menu {
+	background-image: url(../img/worp-long.png);
 	background-repeat: no-repeat;
-	height: 80px;
+	height: 60px;
+	padding-top: 60px;
+	text-align: right;
 }
 
+img {
+	border: solid 1px black;
+}
 
-#menu {
-	margin-top: 10px;
-	margin-left: auto;
-	margin-right: auto;
-	width: 80%;
+.mp3 {
+	margin-left: 100px;
+	width: 400px;
+	text-align: center;
 }
 
 #tocmain {

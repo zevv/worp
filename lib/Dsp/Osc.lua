@@ -6,7 +6,7 @@
 
 function Dsp:Osc(init)
 
-	local sin = math.sin
+	local cos = math.cos
 	local i, di = 0, 0
 
 	return Dsp:Mod({

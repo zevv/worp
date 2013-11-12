@@ -22,6 +22,7 @@ require "app.co"
 require "app.getopt"
 require "app.autoload"
 
+require "lib/Core"
 
 -- 
 -- Main 

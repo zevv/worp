@@ -7,17 +7,17 @@ function Metro:new(bpm, b)
 	local spm = spb * b
 	local spt = spb / 120
 	return {
-		beat = function()
+		t_beat = function()
 			return spb
 		end,
-		meas = function()
+		t_meas = function()
 			return spm
 		end,
 		at_meas = function(m, ...)
-			at((math.floor((t_now + 0.001) / spm) + 1) * spm - t_now, ...)
+			at((math.floor(t_now / spm) + 1) * spm, ...)
 		end,
 		at_beat = function(m, ...)
-			at((math.floor((t_now + 0.001) / spb) + 1) * spb - t_now, ...)
+			at((math.floor(t_now / spb) + 1) * spb, ...)
 		end
 	}
 end

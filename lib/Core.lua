@@ -1,16 +1,14 @@
 
 --
--- rl: return a random item from the given list
+-- The Core library defines some handy low level functions:
+--
+--   rl(LIST): return a random item from the given list
+--   rr(MIN, MAX): return a random number from the given range
 --
 
 function rl(vs)
 	return vs[math.random(1, #vs)]
 end
-
-
---
--- rr: return a random number from the given range
---
 
 function rr(min, max)
 	return math.random(min, max)

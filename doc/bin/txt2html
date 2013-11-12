@@ -37,7 +37,7 @@ function link(s)
 end
 
 function list(s, n)
-	return "<ul>" .. s:gsub("\n%*", "<li>") .. "</ul>\n\n" .. n
+	return "<ul>" .. s:gsub("\n%*", "\n<li>") .. "</ul>\n\n" .. n
 end
 
 local toc = {}

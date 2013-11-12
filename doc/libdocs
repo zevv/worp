@@ -2,6 +2,14 @@
 
 table.sort(arg)
 
+print [[
+
+= Libraries
+
+This page briefly describes all available library functions.
+
+
+]]
 
 for _, fname in ipairs(arg) do
 

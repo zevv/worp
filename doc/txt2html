@@ -36,14 +36,8 @@ end
 
 local toc = {}
 
-function h1(s)
+function header(s)
 	table.insert(toc, s)
-	return "<a name='" .. s .. "'></a><h1>" .. s .. "</h1>"
-end
-
-function h2(s)
-	table.insert(toc, s)
-	return "<a name='" .. s .. "'></a><h2>" .. s .. "</h2>"
 end
 
 local c = io.read("*a")
@@ -52,8 +46,9 @@ c = c:gsub("<", "&lt;")
 c = c:gsub(">", "&gt;")
 c = c:gsub("'(%w+)'", "<i>%1</i>")
 c = c:gsub("_(%w+)_", "<b>%1</b>")
-c = c:gsub("\n= ([^\n]+)", h1)
-c = c:gsub("\n== ([^\n]+)", h2)
+c = c:gsub("\n=+ ([^\n]+)", header)
+c = c:gsub("\n= ([^\n]+)", "<a name='%1'></a><h1>%1</h1>")
+c = c:gsub("\n== ([^\n]+)", "<a name='%1'></a><h2>%1</h2>")
 c = c:gsub("\n(\n .-)\n\n", code)
 c = c:gsub("%[([%S+]+)%]", link)
 c = c:gsub("NOTE: (.-)\n\n", "<div class=warn>%1</div>\n\n")

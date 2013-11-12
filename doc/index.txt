@@ -28,3 +28,16 @@ current program flow.
 Worp is in early development and subject to lots of changes. Expect
 documentation to be outdated, examples to fail and API's to be different then
 described.
+
+
+= Running
+
+The Worp source code is hosted on github. Currently there are no official
+releases available, so get the latest code from Github and hope for the best.
+There is no 'make install' target, simply start Worp from the source directory.
+
+  git clone https://github.com/zevv/worp.git
+  cd worp
+  make
+  ./worp
+

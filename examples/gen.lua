@@ -1,25 +1,23 @@
 
 j = Jack:new("worp")
-l = Linuxsampler:new("ls", "/opt/samples")
-
+l = Linuxsampler:new("piano", "/opt/samples")
 m = Metro:new(150, 10)
-
 v = l:add("piano/megapiano.gig", 0)
 
 ns = { 36, 75, 79, 84, 34, 75, 79, 74, 84, 82 }
 
-function one(i)
+function loop(i)
 	play(v, ns[i], ns[i] < 40 and 0.8 or 0.6, 1.0)
 	i = (i % #ns) + 1
 	at(m:t_beat(), one, i)
 end
 
-one(1)
+loop(1)
 
 f = Dsp:Filter { type = "bp", Q = 5 }
 lfo = Dsp:Osc { f = 4 / m:t_meas() }
 
-j:dsp("fx", 1, 1, function(vi)
+j:dsp("wah", 1, 1, function(vi)
 	f:set { f = lfo() * 500 + 700 }
 	return f(vi)
 end)
@@ -34,7 +32,6 @@ j:dsp("perc", 0, 2, function()
 	return p(r(nf(a() * n())))
 end)
 
-
 function click()
 	nf:set { f = rr(8000, 12000) }
 	p:set { pan = rr(-1, 1) }
@@ -45,8 +42,8 @@ end
 
 click()
 
-j:connect("ls", "worp:fx")
-j:connect("worp:fx", "system:playback")
+j:connect("piano", "worp:wah")
+j:connect("worp:wah", "system:playback")
 j:connect("worp:perc", "system:playback")
 
 -- vi: ft=lua ts=3 sw=3

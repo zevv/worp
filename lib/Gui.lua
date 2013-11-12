@@ -274,19 +274,24 @@ local cmd_handler = {
 
 			local function on_value_changed(knob)
 				local val = k2v(knob:get_value())
-				local fmt = "%d"
-				if math.abs(val) < 100 then fmt = "%.1f" end
-				if math.abs(val) < 10 then fmt = "%.2f" end
-				if control.unit then
-					fmt = fmt .. " " .. control.unit
-				end
-				label:set_text((control.fmt or fmt) % val)
 				if not mute then
 					worker:tx { cmd = "set", data = {
 						uid = data.uid,
 						value = val,
 					}}
 				end
+				local unit = control.unit
+				if val > 1000 then
+					val = val / 1000
+					unit = "k" .. unit
+				end
+				local fmt = "%d"
+				if math.abs(val) < 100 then fmt = "%.1f" end
+				if math.abs(val) < 10 then fmt = "%.2f" end
+				if control.unit then
+					fmt = fmt .. " " .. unit
+				end
+				label:set_text((control.fmt or fmt) % val)
 			end
 
 			local knob = Knob {

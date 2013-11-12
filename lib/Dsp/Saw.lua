@@ -1,4 +1,9 @@
 
+--
+-- The Saw module generates a sawtooth wave at the given frequency. The output
+-- range is -1.0 .. +1.0
+--
+
 function Dsp:Saw(init)
 
 	local v, dv = 0, 0

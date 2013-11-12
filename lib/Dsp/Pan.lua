@@ -1,4 +1,8 @@
 
+--
+-- Stereo pan. Takes one or two inputs and pans them between the two outputs.
+--
+
 function Dsp:Pan(init)
 
 	local v1, v2

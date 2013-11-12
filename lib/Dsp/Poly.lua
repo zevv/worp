@@ -1,6 +1,10 @@
 
 --
--- Make mod polyphonic
+-- The Poly module converts a monophonic module into a polyphonic module with
+-- the given number of voices.
+--
+-- In addition to a generator function, it also returns an instrument function
+-- which can be used to play the instrument.
 --
 
 function Dsp:Poly(init)
@@ -45,8 +49,8 @@ function Dsp:Poly(init)
 				end
 			end,
 			{
-				id = "gen",
-				type = "generator",
+				id = "mod",
+				type = "module",
 				description = "Generator module",
 				fn_set = function(v) gen = v end
 			}, {

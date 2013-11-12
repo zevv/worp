@@ -1,5 +1,13 @@
-				
--- http://www.taygeta.com/random/gaussian.html
+
+--
+-- Random noise generator module, generates noise in the range -1.0 .. +1.0
+--
+-- The noise module can generate both uniform and gaussian white noise.
+--
+-- The gaussian noise is based on code from ..., check the original document at
+-- [http://www.taygeta.com/random/gaussian.html] for more details about the
+-- implementation
+--
 
 function Dsp:Noise(init)
 

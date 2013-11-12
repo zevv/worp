@@ -1,5 +1,21 @@
 
--- Biquads, based on http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
+-- 
+-- The Filter module is a basic audio filter with configurable frequency, resonance and gain.
+-- A number of different filter types are provided:
+--
+-- * hp: High pass
+-- * lp: Low pass
+-- * bp: Band pass
+-- * bs: Band stop (aka, Notch)
+-- * ls: Low shelf
+-- * hs: High shelf
+-- * ap: All pass
+-- * eq: Peaking EQ filter
+--
+-- The code is based on a document from Robert Bristow-Johnson, check the original
+-- at [http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt] for more details
+-- about the filter implementation
+--
 
 function Dsp:Filter(init)
 
@@ -31,7 +47,7 @@ function Dsp:Filter(init)
 					b0, b1, b2 = Q*alpha, 0, -Q*alpha
 					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
-				elseif type == "bs" then
+				elseif type == "br" then
 					b0, b1, b2 = 1, -2*cos_w0, 1
 					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 

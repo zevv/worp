@@ -1,10 +1,16 @@
 
+--
+-- The Osc module generates a cosine wave at the given frequency. The output
+-- range is -1.0 .. +1.0
+--
+
 function Dsp:Osc(init)
 
 	local sin = math.sin
 	local i, di = 0, 0
 
 	return Dsp:Mod({
+		id = "osc",
 		description = "Sine oscillator",
 		controls = {
 			{
@@ -21,7 +27,7 @@ function Dsp:Osc(init)
 		},
 		fn_gen = function()
 			i = i + di
-			return sin(i)
+			return cos(i)
 		end
 	}, init)
 end

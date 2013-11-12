@@ -49,7 +49,7 @@ function worp(what)
 			vim.command("sign place " .. i .. " line=" .. i .. " name=sent file=" .. b.fname)
 			code[#code+1] = b[i]
 		end
-		code[#code+1] = "-- live " .. from .. " " .. to .. " " .. b.name
+		code[#code+1] = "-- live " .. from .. " " .. to .. " " .. (b.name or "")
 		send(table.concat(code, "\n"))
 	else
 		vim.command("sign place 1 line=1 name=sent file=" .. b.fname)

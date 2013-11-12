@@ -11,6 +11,9 @@ This is what Worp code looks like. The fragment below plays a piano loop with
 Linuxsampler, adds a wah-wah effect with a LFO-controlled bandpass filter, and
 plays some simple reverberated percussion in the background:
 
+[example.mp3]
+
+
 
   j = Jack:new("worp")
   l = Linuxsampler:new("piano", "/opt/samples")

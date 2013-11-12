@@ -1,4 +1,8 @@
 
+--
+-- See the [gui] documentation page
+--
+
 Gui = {}
 
 

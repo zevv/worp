@@ -8,11 +8,11 @@ HTML	+= libs.html
 
 all: $(HTML)
 
-%.html: %.txt txt2html
-	./txt2html $(PAGES) < $< > $@
+%.html: %.txt bin/txt2html
+	bin/txt2html $(PAGES) < $< > $@
 
-libs.txt: ./libdocs $(LIBS)
-	./libdocs $(LIBS) > $@
+libs.txt: bin/libdocs $(LIBS)
+	bin/libdocs $(LIBS) > $@
 
 clean:
 	rm -f *.html

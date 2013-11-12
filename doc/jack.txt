@@ -14,7 +14,7 @@ name:
 
 Now that a jack client is available, we can use it to do some work:
 
-== Connecting ports
+== Ports
 
 Connecting Jack ports is done with the ':connect()' method of the jack client
 object:
@@ -69,7 +69,7 @@ Check the sample scripts for more examples of the usage of the connect()
 function.
 
 
-== Handling midi
+== MIDI
 
 The jack client provides two methods for receiving midi data:
 
@@ -91,7 +91,7 @@ control changes for midi channel 1 and CC #5:
   end)
 
 
-== Handling audio
+== Sound
 
 NOTE: The DSP API is currently being reworked, so the documentation below will be
 outdated soon

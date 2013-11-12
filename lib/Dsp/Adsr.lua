@@ -1,4 +1,13 @@
 
+--
+-- Attack / Decay / Sustain / Release module.
+--
+-- This module generates an envelope amplitude between 0.0 and 1.0. When the
+-- 'vel' argument is set to >0 the envelope generator will start (note on),
+-- when 'vel' is set to zero, the generator will go to the decay phase and fall
+-- down to zero amplitude (note off)
+--
+
 function Dsp:Adsr(init)
 
 	local arg = {

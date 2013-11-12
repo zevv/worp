@@ -1,5 +1,10 @@
 
--- based on Jezar's public domain C++ sources,
+-- 
+-- Freeverb reverberator, based on Jezar's public domain C++ sources. 
+--
+-- This is a relatively simple and cheap stereo reverberator, based on a
+-- cascade of comb and allpass filters.
+--
 
 function Dsp:Reverb(init)
 

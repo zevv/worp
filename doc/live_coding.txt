@@ -1,0 +1,28 @@
+
+= Live coding
+
+Worp has been designed to allow live editing of the code without interrupting
+sound playback. New chunks of Lua code can be sent to worp trough a local
+network socket, and are compiled and executed on the fly. A proof-of-concept
+vim plugin is available which can send parts of the current file to a running
+worp process.
+
+Load the plugin with the vim command
+
+:luafile ~/sandbox/prjs/worp/vimplugin.lua<CR>
+
+The plugin currently remaps the following vim key sequences:
+
+* ,a : send the whole file to worp
+* ,f : send the current function
+* ,p : send the current paragraph
+* ,<CR> : send the current line
+
+
+Be careful with locals when using live coding: any functions or variables
+defined local during chunk loading will not be available when loading the next
+chunk. All code is loaded into the same environment, so use globals instead.
+
+
+test
+

@@ -1,0 +1,59 @@
+#!/usr/bin/lua
+
+table.sort(arg)
+
+print [[
+
+= Libraries
+
+This page briefly describes all available library functions.
+
+
+]]
+
+for _, fname in ipairs(arg) do
+
+	local lib = fname:gsub("../lib/", ""):gsub(".lua", ""):gsub("/", ":")
+
+	print("")
+	print("== " .. lib)
+	print("")
+	
+	local f = io.open(fname)
+	if f then
+		local a = f:read("*a")
+		f:close()
+
+		-- Get first comment block of file
+	
+		doc = a:match("^%s*(%-%-.-)\n\n")
+		if doc then
+			doc = ("\n" .. doc):gsub("%-%- ?", "")
+			print(doc)
+		end
+
+		-- Cut out 'controls' section of module, assuming only
+		-- a single module is defined in each file
+
+		cs = a:match("controls%s+=%s+(%b{})")
+		if cs then
+			ok, cs = pcall(loadstring("return " .. cs))
+			if ok then
+				print("Controls:")
+				print("")
+				for _, c in ipairs(cs) do
+					local range = ""
+					if c.options and #c.options > 0 then
+						range = table.concat(c.options, "/")
+					else
+						range = (c.min or 0) .. ".." .. (c.max or 1)
+					end
+					print("* " .. c.id .. " : " .. c.description .. " (" .. (c.type or "number") .. ", " .. range .. ")")
+				end
+			end
+		end
+	end
+end
+
+
+-- vi: ft=lua ts=3 sw=3

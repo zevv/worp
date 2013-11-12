@@ -1,4 +1,25 @@
 
+
+-- 
+-- The Linuxsampler library provides a simple method to connect to a running
+-- Linuxsample instance. Example:
+--
+--   l = Linuxsampler:new("synth", "/opt/samples")
+--   piano = l:add("piano/Bosendorfer.gig", 0)
+--   play(piano, 60, 1)
+--
+-- Create a new linuxsampler connection. The given JACK_NAME is used for
+-- it's audio ports, the SAMPLE_PATH is an optional directory prefix
+-- for sample files:
+--
+--   l = Linuxsampler:new(JACK_NAME, SAMPLE_PATH)
+--
+-- Create in instrument function, using the given sample and linuxsampler instrument ID:
+--
+--   piano = l:add(SAMPLE_FNAME, INSTRUMENT_NUMBER)
+--
+
+
 Linuxsampler = {}
 
 -- 

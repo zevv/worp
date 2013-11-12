@@ -1,0 +1,30 @@
+
+= GUI
+
+Support for a graphical user interface is under development. The Gui library
+creates a window where controls and modules can be added.
+
+== Example
+
+For example, the following fragment:
+
+  gui = Gui:new()
+  f = Dsp:Filter()
+  gui:add_mod(f)
+
+will generate this user interface window, mapping each control of the module to
+a suitable graphical representation:
+
+[gui.png]
+
+Turning the knobs will adjust the control values, and any changes in the controls
+will reflect in the knob positions.
+
+NOTE: The current code does not handle fast control updates well, so use with care.
+
+
+== Implementation
+
+The Gui is generated using Gtk through the LGI library:
+[https://github.com/pavouk/lgi]
+

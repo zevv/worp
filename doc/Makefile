@@ -1,5 +1,5 @@
 
-PAGES 	:= index architecture concepts jack dsp examples live_coding libs about
+PAGES 	:= index architecture concepts jack dsp examples live_coding gui libs about
 
 LIBS	:= $(wildcard ../lib/*.lua ../lib/Dsp/*.lua)
 

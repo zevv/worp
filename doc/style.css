@@ -23,6 +23,9 @@ li {
 	height: 80px;
 }
 
+img {
+	border: solid 1px black;
+}
 
 #menu {
 	margin-top: 10px;

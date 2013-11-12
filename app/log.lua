@@ -83,15 +83,8 @@ function logc(level, class, msg, ...)
 		
 		logf_busy = true
 
-		-- Create timestamP. Intra-second timestamps show usec, otherwise
-		-- normale date/time stamp
-
-		local t_now = os.time()
-		local timestamp = os.date("%y-%m-%d %H:%M:%S", t_now)
-		
 		local c = class:sub(-10, -1)
-		io.stderr:write(string.format("%s %s%s|%-10.10s|%s%s\n",
-			timestamp,
+		io.stderr:write(string.format("%s%s|%-10.10s|%s%s\n",
 			logf_use_color and levelcolor or "", 
 			levelstr, 
 			c,

@@ -61,7 +61,8 @@ local function add(ls, fname, index)
 	ls:cmd("LOAD ENGINE gig %s" % ch)
 	ls:cmd("SET CHANNEL AUDIO_OUTPUT_DEVICE %s %s" % { ch, ls.audio_dev })
 	logf(LG_INF, "Loading instrument %s...", fname)
-	ls:cmd("LOAD INSTRUMENT %q %s %s" % { fname, index or 0, ch })
+	ok, err = ls:cmd("LOAD INSTRUMENT %q %s %s" % { fname, index or 0, ch })
+	if not ok then logf(LG_WRN, "%s", err) end
 
 	local info = ls:cmd("GET CHANNEL INFO %s" % ch)
 	local inst = info:match("INSTRUMENT_NAME: ([^\n\r]+)") or "-"

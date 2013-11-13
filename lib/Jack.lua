@@ -153,7 +153,7 @@ end
 -- patt2. If patt2 is not given, it defaults to '*'
 --
 
-local function jack_conn(jack, patt1, patt2)
+local function jack_conn(jack, patt1, patt2, connect)
 
 	patt2 = patt2 or "*"
 	logf(LG_DBG, "Connect %s -> %s", patt1, patt2)
@@ -196,7 +196,11 @@ local function jack_conn(jack, patt1, patt2)
 								local p2 = ps2[math.min(i, #ps2)]
 								if p1.input then p1,p2 = p2,p1 end
 								logf(LG_DBG, "  %s -> %s", p1.name, p2.name)
-								jack_c.connect(jack.j, p1.name, p2.name)
+								if connect then
+									jack_c.connect(jack.j, p1.name, p2.name)
+								else
+									jack_c.disconnect(jack.j, p1.name, p2.name)
+								end
 							end
 						end
 					end
@@ -207,6 +211,15 @@ local function jack_conn(jack, patt1, patt2)
 	
 end
 
+
+local function jack_connect(jack, p1, p2)
+	jack_conn(jack, p1, p2, true)
+end
+
+
+local function jack_disconnect(jack, p1, p2)
+	jack_conn(jack, p1, p2, false)
+end
 
 --
 -- Create new jack client with the given name
@@ -224,7 +237,8 @@ function Jack:new(_, name)
 
 		dsp = jack_dsp,
 		midi = jack_midi,
-		connect = jack_conn,
+		connect = jack_connect,
+		disconnect = jack_disconnect,
 
 		-- data
 	

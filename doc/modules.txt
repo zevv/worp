@@ -1,0 +1,91 @@
+
+= Modules
+
+The Dsp library uses 'modules' as an abstraction type for generators and signal
+processors. A module is a Lua table with a __call metamethod so it can be
+called like a regular function. 
+
+Modules are created using the Dsp:Mod() constructor. For example, the Pan module
+looks like this:
+
+
+  function Dsp:Pan(init)
+  
+    local v1, v2
+  
+    return Dsp:Mod({
+      description = "Pan",
+      controls = {
+        {
+          id = "pan",
+          description = "Pan",
+          min = -1,
+          max = 1,
+          default = 0,
+          fn_set = function(val) 
+            v1 = math.min(1 + val, 1)
+            v2 = math.min(1 - val, 1)
+          end,
+        },
+      },
+  
+      fn_gen = function(i1, i2)
+        i2 = i2 or i1
+        return i1*v1, i2*v2
+      end
+  
+    }, init)
+  
+  end
+
+
+What's happening here:
+
+
+  function Dsp:Pan(init)
+  
+    local v1, v2
+
+Here the function is defined, with some local variables which will be available to the code
+below as upvalues
+
+    return Dsp:Mod({
+      description = "Pan",
+
+Calling the constructor, which takes a table with the modules definition.
+
+      controls = {
+        {
+          id = "pan",
+          description = "Pan",
+          min = -1,
+          max = 1,
+          default = 0,
+          fn_set = function(val) 
+            v1 = math.min(1 + val, 1)
+            v2 = math.min(1 - val, 1)
+          end,
+        },
+      },
+
+Below are the modules controls. The Pan module has only one which is called 'pan'. This control
+ranges from -1 to 1, and has a default of 0. When changed, the fn_set() function is called.
+  
+      fn_gen = function(i1, i2)
+        i2 = i2 or i1
+        return i1*v1, i2*v2
+      end
+
+fn_gen is where the signal is generated; this function is called for each
+sample. The Pan module takes one or two inputs, i1 and i2, and generates two
+outputs, with the input signal panned left or right, depending on the v1 and v2 constants, which
+where calculated in the fn_set() function of the 'pan' control
+  
+    }, init)
+ 
+The constructor takes an optional 'init' table with initial values for the controls.
+
+  end
+
+The end.
+

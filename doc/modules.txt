@@ -5,6 +5,8 @@ The Dsp library uses 'modules' as an abstraction type for generators and signal
 processors. A module is a Lua table with a __call metamethod so it can be
 called like a regular function. 
 
+== Making
+
 Modules are created using the Dsp:Mod() constructor. For example, the Pan module
 looks like this:
 
@@ -39,6 +41,29 @@ looks like this:
   end
 
 
+== Using
+
+To create an instance of the above module, call the constructor:
+
+  pan = Dsp:Pan()
+
+This wil generate a Pan module with default values. It is possible 
+to initialize controls at construction time:
+
+  pan = Dsp:Pan { pan = -0.5 }
+
+Controls can be adjusted by using the 'set' method.
+
+  pan:set { "pan" = 1 }
+
+To run the module, simply call the pan() object with the input samples
+as arguments:
+
+  o1, o2 = pan(i1, i2)
+
+
+== Details
+
 What's happening here:
 
 
@@ -70,7 +95,7 @@ Calling the constructor, which takes a table with the modules definition.
 
 Below are the modules controls. The Pan module has only one which is called 'pan'. This control
 ranges from -1 to 1, and has a default of 0. When changed, the fn_set() function is called.
-  
+
       fn_gen = function(i1, i2)
         i2 = i2 or i1
         return i1*v1, i2*v2
@@ -80,9 +105,9 @@ fn_gen is where the signal is generated; this function is called for each
 sample. The Pan module takes one or two inputs, i1 and i2, and generates two
 outputs, with the input signal panned left or right, depending on the v1 and v2 constants, which
 where calculated in the fn_set() function of the 'pan' control
-  
+
     }, init)
- 
+
 The constructor takes an optional 'init' table with initial values for the controls.
 
   end

@@ -62,11 +62,10 @@ plays some simple reverberated percussion in the background:
 
 == Built on LuaJIT
 
-Worp is built on LuaJIT, a Just-In-Time Compiler (JIT) for the Lua
-programming language. LuaJIT gives the flexibility and robustness of a
-proven language, while delivering near native performance. This allows for
-low-level DSP code (filters, reverbs, etc.) to be written in a high level
-language.
+Worp is built on LuaJIT, a Just-In-Time Compiler (JIT) for the Lua programming
+language. LuaJIT offers the flexibility of the Lua programming language, while
+delivering near native performance. This allows for low-level DSP code
+(filters, reverbs, etc.) to be written in a high level language.
 
 
 == Libraries

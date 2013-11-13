@@ -42,6 +42,8 @@ into a 100 Hz low pass filter with a resonance of 3:
     print(f(o())
   end
 
+For more details, check the [modules] page
+
 
 == Controls
 

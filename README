@@ -5,7 +5,7 @@ in early alpha state.
 
 The main Worp web site and documentation can be found at http://worp.zevv.nl
 
-Some highlights:
+== Some highlights:
 
 - Built on LuaJIT: the ease of using a high level language, but getting near
   native C performance. Even low-level DSP functions (filters, reverb) can be
@@ -15,4 +15,13 @@ Some highlights:
   use of a vim plugin. New chunks can be sent and compiled on the fly.
 
 - Bindings for Fluidsynth and midi support
+
+
+== License
+
+Copyright (C) 2013 Ico Doornekamp. 
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License version 2 as published by the Free
+Software Foundation.
 

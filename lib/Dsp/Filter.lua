@@ -47,7 +47,7 @@ function Dsp:Filter(init)
 					b0, b1, b2 = Q*alpha, 0, -Q*alpha
 					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 
-				elseif type == "br" then
+				elseif type == "bs" then
 					b0, b1, b2 = 1, -2*cos_w0, 1
 					a0, a1, a2 = 1 + alpha, -2*cos_w0, 1 - alpha
 

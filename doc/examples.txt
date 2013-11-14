@@ -1,7 +1,9 @@
 
 = Examples
 
-Some examples are available in the /examples directory.
+This page is a bit too empty at this time.
+
+More examples are available in the /examples directory.
 
 == Linuxsampler
 

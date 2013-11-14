@@ -25,6 +25,10 @@ img {
 	border: solid 1px black;
 }
 
+.video {
+	text-align: center;
+}
+
 .mp3 {
 	margin-left: 100px;
 	width: 400px;

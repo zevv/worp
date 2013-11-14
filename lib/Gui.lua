@@ -178,7 +178,7 @@ local cmd_handler = {
 	new = function(worker, id, data)
 
 		local window = Gtk.Window {
-			--resizable = false,
+			resizable = false,
 			title = data.gui_id,
 			Gtk.Box {
 				id = "box",

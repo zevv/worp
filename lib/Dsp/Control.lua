@@ -47,7 +47,7 @@ function Dsp:Control(def, mod)
 		options = def.options or {},
 		log = def.log,
 		unit = def.unit,
-		default = def.default,
+		default = def.default or 0,
 		value = nil,
 		fn_set = {},
 	}

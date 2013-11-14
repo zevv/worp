@@ -61,6 +61,8 @@ percussion in the background:
 
 == Linuxsampler
 
+Create a linuxsampler instrument, and map this to midi channel 1.
+
   ls = Linuxsampler:new("synth", "/opt/samples")
   j = Jack:new("worp")
   midi = j:midi()

@@ -5,7 +5,7 @@ function Synth()
 
 	local o1 = Dsp:Square()
 	local o2 = Dsp:Saw()
-	local f = Dsp:Filter { f = 800, Q = 8 }
+	local f = Dsp:Filter { f = 800, Q = 4 }
 	local adsr  = Dsp:Adsr { A = 0.01, D = 0.01, S = 0.3 }
 	local adsr2 = Dsp:Adsr { A = 0.03, D = 1.00, S = 0.1 }
 	local pan = Dsp:Pan()
@@ -44,7 +44,7 @@ j:connect("worp")
 
 function play2(instr, note, vel, dur)
 	play(instr, note, vel, dur)
-	at(0.18*3, play, instr, note + 12, vel * 0.9, dur)
+	at(0.18*3, play, instr, note - 12, vel * 0.9, dur)
 end
 
 ns = { 34, 22, 70, 34, 65, 34, 17, 74, 36, 72, 53, 58 }

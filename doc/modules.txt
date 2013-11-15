@@ -93,7 +93,7 @@ Calling the constructor, which takes a table with the modules definition.
         },
       },
 
-Below are the modules controls. The Pan module has only one which is called 'pan'. This control
+These are the modules controls. The Pan module has only one which is called 'pan'. This control
 ranges from -1 to 1, and has a default of 0. When changed, the fn_set() function is called.
 
       fn_gen = function(i1, i2)

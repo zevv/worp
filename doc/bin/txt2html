@@ -26,8 +26,10 @@ function link(s)
 	elseif s:find("mp3$") then
 		return [[
 		<div class=mp3>
+		 ]] .. s .. [[<br> 
 		 <object type="application/x-shockwave-flash" data="htdocs/zplayer.swf?c1=ff4400&c2=0&c3=0&mp3=]] .. s .. [[" width="200" height="20"/>
-		 <param name="movie" value="htdocs/zplayer.swf?mp3=]] .. s .. [[" /> </object><br>]] .. s .. [[ </div>
+		 <param name="movie" value="htdocs/zplayer.swf?mp3=]] .. s .. [[" /> </object>
+		</div>
 		]]
 	elseif s:find("vimeo") then
 		local id = s:match("%d+")

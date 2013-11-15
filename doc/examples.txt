@@ -8,6 +8,9 @@ More examples are available in the /examples directory.
 
 == Polyphonic synth appregiator
 
+A polyphonic synthesizer with filtering envelope, played by a simple appregiator.
+
+
 [appregiator.mp3]
 
   

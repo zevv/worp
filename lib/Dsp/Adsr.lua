@@ -42,8 +42,8 @@ function Dsp:Adsr(init)
 				id = "A",
 				description = "Attack",
 				max = 10,
-				unit = "sec",
-				default = 0,
+				unit = "s",
+				default = 0.1,
 				fn_set = function(val)
 					dv_A =  math.min(1/(srate * val), 1)
 				end,
@@ -51,8 +51,8 @@ function Dsp:Adsr(init)
 				id = "D",
 				description = "Decay",
 				max = 10,
-				unit = "sec",
-				default = 0,
+				unit = "s",
+				default = 0.1,
 				fn_set = function(val)
 					dv_D = math.max(-1/(srate * val), -1)
 				end,
@@ -67,8 +67,8 @@ function Dsp:Adsr(init)
 				id = "R",
 				description = "Release",
 				max = 10,
-				unit = "sec",
-				default = 0,
+				unit = "s",
+				default = 0.1,
 				fn_set = function(val)
 					dv_R = math.max(-1/(srate * val), -1)
 				end

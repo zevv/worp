@@ -15,7 +15,7 @@
 #include <lauxlib.h>
 
 #define MAX_PORTS 4
-#define RB_SIZE 4096
+#define RB_SIZE 16384
 	
 #define sample_t jack_default_audio_sample_t
 

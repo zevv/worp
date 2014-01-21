@@ -6,7 +6,7 @@
 jack = Jack:new("worp")
 
 
-f = Dsp:filter("lp", 2000, 5)
+f = Dsp:Filter("lp", 2000, 5)
 
 d = 0
 e = 0
@@ -24,8 +24,8 @@ jack:midi("midi", function(channel, t, d1, d2)
 end)
 
 
-o = Dsp:osc(60)
-s = Dsp:saw(90.5)
+o = Dsp:Osc(60)
+s = Dsp:Saw(90.5)
 
 print(s)
 

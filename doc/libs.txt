@@ -1,0 +1,224 @@
+
+= Libraries
+
+This page briefly describes all available library functions.
+
+
+
+
+== Chord
+
+
+== Core
+
+
+
+The Core library defines some handy low level functions:
+
+  rl(LIST): return a random item from the given list
+  rr(MIN, MAX): return a random number from the given range
+  ntf(NOTE): return frequency of midi note number NOTE
+
+
+== Dsp:Adsr
+
+
+
+Attack / Decay / Sustain / Release module.
+
+This module generates an envelope amplitude between 0.0 and 1.0. When the
+'vel' argument is set to >0 the envelope generator will start (note on),
+when 'vel' is set to zero, the generator will go to the decay phase and fall
+down to zero amplitude (note off)
+
+Controls:
+
+* vel : Velocity (number, 0..1)
+* A : Attack (number, 0..10)
+* D : Decay (number, 0..10)
+* S : Sustain (number, 0..1)
+* R : Release (number, 0..10)
+
+== Dsp:Const
+
+
+
+Generator which outputs a constant value in the range 0..1, controlled by
+the 'c' control. Useful for easy mapping of a GUI knob or midi CC to a value.
+
+Controls:
+
+* c : Value (number, 0..1)
+
+== Dsp:Control
+
+
+== Dsp:Filter
+
+
+
+The Filter module is a basic audio filter with configurable frequency, resonance and gain.
+A number of different filter types are provided:
+
+* hp: High pass
+* lp: Low pass
+* bp: Band pass
+* bs: Band stop (aka, Notch)
+* ls: Low shelf
+* hs: High shelf
+* ap: All pass
+* eq: Peaking EQ filter
+
+The code is based on a document from Robert Bristow-Johnson, check the original
+at [http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt] for more details
+about the filter implementation
+
+Controls:
+
+* type : Filter type (enum, lp/hp/bp/bs/ls/hs/eq/ap)
+* f : Frequency (number, 0..20000)
+* Q : Resonance (number, 0.1..100)
+* gain : Shelf/EQ filter gain (number, -60..60)
+
+== Dsp:Mod
+
+
+== Dsp:Noise
+
+
+
+Random noise generator module, generates noise in the range -1.0 .. +1.0
+
+The noise module can generate both uniform and gaussian white noise.
+
+The gaussian noise is based on code from ..., check the original document at
+[http://www.taygeta.com/random/gaussian.html] for more details about the
+implementation
+
+Controls:
+
+* type : Noise type (enum, uniform/gaussian)
+
+== Dsp:Osc
+
+
+
+The Osc module generates a cosine wave at the given frequency. The output
+range is -1.0 .. +1.0
+
+Controls:
+
+* f : Frequency (number, 0..20000)
+
+== Dsp:Pan
+
+
+
+Stereo pan. Takes one or two inputs and pans them between the two outputs.
+
+Controls:
+
+* pan : Pan (number, -1..1)
+
+== Dsp:Pitchshift
+
+Controls:
+
+* f : Factor (number, 0.5..2)
+
+== Dsp:Reverb
+
+
+
+Freeverb reverberator, based on Jezar's public domain C++ sources. 
+
+This is a relatively simple and cheap stereo reverberator, based on a
+cascade of comb and allpass filters.
+
+Controls:
+
+* wet : Wet volume (number, 0..1)
+* dry : Dry volume (number, 0..1)
+* room : Room size (number, 0..1.1)
+* damp : Damping (number, 0..1)
+
+== Dsp:Saw
+
+
+
+The Saw module generates a sawtooth wave at the given frequency. The output
+range is -1.0 .. +1.0
+
+Controls:
+
+* f : Frequency (number, 0..20000)
+
+== Dsp:Square
+
+
+
+The Square module generates a square wave at the given frequency and pwm
+offset. The output range is -1.0 .. +1.0
+
+Controls:
+
+* f : Frequency (number, 0..20000)
+* pwm : PWM (number, 0..1)
+
+== Dsp:Width
+
+Controls:
+
+* width : Stereo width (number, 0..2)
+
+== Fluidsynth
+
+
+== Gui
+
+
+
+See the [gui] documentation page
+
+
+== Jack
+
+
+
+See the [jack] documentation page
+
+
+== Linuxsampler
+
+
+
+The Linuxsampler library provides a simple method to connect to a running
+Linuxsample instance. Example:
+
+  l = Linuxsampler:new("synth", "/opt/samples")
+  piano = l:add("piano/Bosendorfer.gig", 0)
+  play(piano, 60, 1)
+
+Create a new linuxsampler connection. The given JACK_NAME is used for
+it's audio ports, the SAMPLE_PATH is an optional directory prefix
+for sample files:
+
+  l = Linuxsampler:new(JACK_NAME, SAMPLE_PATH)
+
+Create in instrument function, using the given sample and linuxsampler instrument ID:
+
+  piano = l:add(SAMPLE_FNAME, INSTRUMENT_NUMBER)
+
+
+== Metro
+
+
+== Mixer
+
+
+== Poly
+
+
+
+The Poly function provides an easy way to create polyphonic instruments.
+
